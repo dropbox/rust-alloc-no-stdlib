@@ -1,0 +1,9 @@
+[package]
+name = "alloc-no-stdlib"
+version = "0.0.1"
+authors = ["Daniel Reiter Horn <danielrh@dropbox.com>"]
+license = "BSD license"
+repository = "https://github.com/dropbox/rust-alloc-no-stdlib"
+
+[[bin]]
+name = "example"
