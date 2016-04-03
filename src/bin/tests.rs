@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+#[cfg(test)]
 extern crate core;
 use alloc::Allocator;
 use super::HeapAllocator;
