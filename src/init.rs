@@ -20,12 +20,16 @@ macro_rules! static_array {
         => {static_array!(@accum (64, $($expr,)* $($expr),*) -> ($($body)*))};
     (@accum (256, $($expr:expr),*) -> ($($body:tt)*))
         => {static_array!(@accum (128, $($expr,)* $($expr),*) -> ($($body)*))};
-    (@accum (1024, $($expr:expr),*) -> ($($body:tt)*))
+    (@accum (512, $($expr:expr),*) -> ($($body:tt)*))
         => {static_array!(@accum (256, $($expr,)* $($expr),*) -> ($($body)*))};
+    (@accum (1024, $($expr:expr),*) -> ($($body:tt)*))
+        => {static_array!(@accum (512, $($expr,)* $($expr),*) -> ($($body)*))};
     (@accum (2048, $($expr:expr),*) -> ($($body:tt)*))
         => {static_array!(@accum (1024, $($expr,)* $($expr),*) -> ($($body)*))};
     (@accum (4096, $($expr:expr),*) -> ($($body:tt)*))
         => {static_array!(@accum (2048, $($expr,)* $($expr),*) -> ($($body)*))};
+    (@accum (8192, $($expr:expr),*) -> ($($body:tt)*))
+        => {static_array!(@accum (4096, $($expr,)* $($expr),*) -> ($($body)*))};
 
     (@as_expr $expr:expr) => {$expr};
 
