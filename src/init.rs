@@ -107,8 +107,9 @@ macro_rules! declare_stack_allocator_struct(
               }
               return retval.into_boxed_slice();
           }
-          fn new_allocator(freelist_size : usize) -> StackAllocator<'a, T, $name<'a, T> > {
-              return StackAllocator::<T, $name<T> > {
+          fn new_allocator(freelist_size : usize,
+                           memory_pool : &'a mut Box<[T]>) -> StackAllocator<'a, T, $name<'a, T> > {
+              let mut retval = StackAllocator::<T, $name<T> > {
                   nop : &mut [],
                   system_resources : $name::<T> {
                       freelist : Self::make_freelist(freelist_size),//(vec![&mut[]; $freelist_size]).into_boxed_slice(),
@@ -116,6 +117,8 @@ macro_rules! declare_stack_allocator_struct(
                   free_list_start : freelist_size,
                   free_list_overflow_count : 0
               };
+              retval.free_cell(AllocatedStackMemory::<T>{mem:&mut*memory_pool});
+              return retval;
           }
         }
     };
@@ -133,20 +136,14 @@ macro_rules! declare_stack_allocator_struct(
     };
 );
 #[macro_export]
-macro_rules! bind_memory_buffer_to_allocator(
-    ($allocator : expr, $buffer : expr, $T : ty, calloc) => {
-        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:$buffer});
-    };
-    ($allocator : expr, $buffer : expr, $T : ty, heap) => {
-        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:&mut*$buffer});
-    };
-    ($allocator : expr, $buffer : expr, $T : ty, stack) => {
+macro_rules! bind_global_buffers_to_allocator(
+    ($allocator : expr, $buffer : expr, $T : ty) => {
         $allocator.free_cell(AllocatedStackMemory::<$T>{mem:$buffer});
     };
 );
 
 #[macro_export]
-macro_rules! define_heap_memory_structure(
+macro_rules! define_allocator_memory_pool(
     (@as_expr $expr:expr) => {$expr};
 
 
@@ -168,7 +165,7 @@ macro_rules! define_heap_memory_structure(
     ($name : ident, $freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], global) => {
        pub mod $name {
            static mut freelist : [&'static mut [$T];
-                                  define_heap_memory_structure!(@as_expr $freelist_size)]
+                                  define_allocator_memory_pool!(@as_expr $freelist_size)]
                = static_array!(&mut[]; $freelist_size);
            static mut heap : [$T; $heap_size] = [$default_value; $heap_size];
        }
