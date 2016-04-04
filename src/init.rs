@@ -72,23 +72,125 @@ macro_rules! define_stack_allocator_traits(
 
 #[macro_export]
 macro_rules! declare_stack_allocator_struct(
-    ($name :ident, $freelist_size : expr, $heap_size : expr, calloc) => {
-        struct $name<'a, T : 'a> {freelist : [&'a mut [T]; $freelist_size]}
-        define_stack_allocator_traits!($name, calloc);
+    (@as_expr $expr : expr) => {$expr};
+    (@new_method $name : ident, $freelist_size : tt) => {
+        impl<'a, T: 'a> $name<'a, T> {
+          fn new_allocator() -> StackAllocator<'a, T, $name<'a, T> > {
+              return StackAllocator::<T, $name<T> > {
+                  nop : &mut [],
+                  system_resources : $name::<T> {
+                      freelist : static_array!(&mut[]; $freelist_size),
+                  },
+                  free_list_start : declare_stack_allocator_struct!(@as_expr $freelist_size),
+                  free_list_overflow_count : 0,
+              };
+          }
+        }
     };
-    ($name :ident, $freelist_size : expr, $heap_size : expr, heap) => {
-        struct $name<'a, T : 'a> {freelist : Box<[&'a mut [T]]>, heap : Box<[T]>}
-        define_stack_allocator_traits!($name, heap);
-    };
-    ($name :ident, $freelist_size : expr, $heap_size : expr, stack) => {
+    ($name :ident, $freelist_size : tt, calloc) => {
         struct $name<'a, T : 'a> {
-            freelist : [&'a mut [T];$freelist_size],
+            freelist : [&'a mut [T]; declare_stack_allocator_struct!(@as_expr $freelist_size)],
+        }
+        define_stack_allocator_traits!($name, calloc);
+        declare_stack_allocator_struct!( @new_method $name, $freelist_size);
+    };
+    ($name :ident, heap) => {
+        struct $name<'a, T : 'a> {freelist : Box<[&'a mut [T]]>,}
+        define_stack_allocator_traits!($name, heap);
+        impl<'a, T: 'a> $name<'a, T> {
+          fn make_freelist(freelist_size : usize) -> Box<[&'a mut[T]]> {
+              let mut retval = Vec::<&'a mut[T]>::with_capacity(freelist_size);
+              for _i in 0..freelist_size {
+                  retval.push(&mut[]);
+              }
+              return retval.into_boxed_slice();
+          }
+          fn new_allocator(freelist_size : usize) -> StackAllocator<'a, T, $name<'a, T> > {
+              return StackAllocator::<T, $name<T> > {
+                  nop : &mut [],
+                  system_resources : $name::<T> {
+                      freelist : Self::make_freelist(freelist_size),//(vec![&mut[]; $freelist_size]).into_boxed_slice(),
+                  },
+                  free_list_start : freelist_size,
+                  free_list_overflow_count : 0
+              };
+          }
+        }
+    };
+    ($name :ident, $freelist_size : tt, stack) => {
+        struct $name<'a, T : 'a> {
+            freelist : [&'a mut [T];declare_stack_allocator_struct!(@as_expr $freelist_size)],
             // can't borrow here: make it on stack-- heap : core::cell::RefCell<[T; $heap_size]>
         }
         define_stack_allocator_traits!($name, stack);
+        declare_stack_allocator_struct!( @new_method $name, $freelist_size);
     };
-    ($name :ident, $freelist_size : expr, $heap_size : expr, global) => {
+    ($name :ident, $freelist_size : expr, global) => {
        struct $name <'a, T: 'a> {freelist : [&'a mut [T]]}
-        define_stack_allocator_traits!($name, global);
+       define_stack_allocator_traits!($name, global);
     };
 );
+#[macro_export]
+macro_rules! bind_memory_buffer_to_allocator(
+    ($allocator : expr, $buffer : expr, $T : ty, calloc) => {
+        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:$buffer});
+    };
+    ($allocator : expr, $buffer : expr, $T : ty, heap) => {
+        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:&mut*$buffer});
+    };
+    ($allocator : expr, $buffer : expr, $T : ty, stack) => {
+        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:$buffer});
+    };
+);
+
+#[macro_export]
+macro_rules! define_heap_memory_structure(
+    (@as_expr $expr:expr) => {$expr};
+
+
+    ($name : ident, $freelist_size : tt, $heap_size : expr, $T : ty, 0, calloc) => {
+       unsafe fn $name<T : Sized>(num_elements : usize) -> *mut T {
+           let retval = calloc(num_elements, core::mem::size_of::<T>());
+           return core::mem::transmute(retval);
+       }
+
+       let mut $name : &mut [$T] = unsafe{core::slice::from_raw_parts_mut(
+           $name::<$T>($heap_size), $heap_size)};
+    };
+    ($name : ident, $freelist_size : tt, $heap_size : expr, $T : ty, $default_value : expr, heap) => {
+       let mut $name : Box<[$T]> = (vec![$default_value; $heap_size]).into_boxed_slice();
+    };
+    ($name : ident, $freelist_size : tt, $heap_size : expr, $T : ty, $default_value : expr, stack) => {
+       mut $name : [$T; $heap_size] = [$default_value; $heap_size];
+
+    };
+    ($name : ident, $freelist_size : tt, $heap_size : expr, $T : ty, $default_value : expr, global) => {
+       pub mod $name {
+           static mut freelist : [&'static mut [$T];
+                                  define_heap_memory_structure!(@as_expr $freelist_size)]
+               = static_array!(&mut[]; $freelist_size);
+           static mut heap : [$T; $heap_size] = [$default_value; $heap_size];
+       }
+    };
+
+);
+
+
+/*
+#[macro_export]
+macro_rules! initialize_allocator(
+    (@as_expr $expr:expr) => {$expr};
+
+
+    ($name : ident, $freelist_size : tt, $T : ty, calloc) => {
+        StackAllocator::<$T, $name<$T> > {
+            nop : &mut [],
+            system_resources : $name::<$T> {
+                freelist : static_array!(&mut[]; $freelist_size),
+            },
+            free_list_start : $freelist_size,
+            free_list_overflow_count : 0,
+        }
+    };
+);
+*/
