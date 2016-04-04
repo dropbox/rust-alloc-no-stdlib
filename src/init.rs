@@ -135,14 +135,28 @@ macro_rules! declare_stack_allocator_struct(
         declare_stack_allocator_struct!( @new_method $name, $freelist_size);
     };
     ($name :ident, $freelist_size : expr, global) => {
-       struct $name <'a, T: 'a> {freelist : [&'a mut [T]]}
+       struct $name <'a, T: 'a> {freelist : &'a mut [&'a mut [T]]}
        define_stack_allocator_traits!($name, global);
+       impl<'a, T: 'a> $name<'a, T> {
+          fn new_allocator() -> StackAllocator<'a, T, $name<'a, T> > {
+              return StackAllocator::<T, $name<T> > {
+                  nop : &mut [],
+                  system_resources : $name::<T> {
+                      freelist : &mut[],
+                  },
+                  free_list_start : 0,
+                  free_list_overflow_count : 0
+              };
+          }
+       }
     };
 );
 #[macro_export]
 macro_rules! bind_global_buffers_to_allocator(
-    ($allocator : expr, $buffer : expr, $T : ty) => {
-        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:$buffer});
+    ($allocator : expr, $buffer : ident, $T : ty) => {
+        $allocator.free_list_start = unsafe{$buffer::freelist.len()};
+        $allocator.system_resources.freelist = unsafe{&mut $buffer::freelist};
+        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:unsafe{&mut $buffer::heap}});
     };
 );
 
@@ -168,10 +182,10 @@ macro_rules! define_allocator_memory_pool(
     };
     ($name : ident, $freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], global) => {
        pub mod $name {
-           static mut freelist : [&'static mut [$T];
+           pub static mut freelist : [&'static mut [$T];
                                   define_allocator_memory_pool!(@as_expr $freelist_size)]
                = static_array!(&mut[]; $freelist_size);
-           static mut heap : [$T; $heap_size] = [$default_value; $heap_size];
+           pub static mut heap : [$T; $heap_size] = [$default_value; $heap_size];
        }
     };
 
