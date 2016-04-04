@@ -83,7 +83,7 @@ fn main() {
     let mut _z = boxallocator.alloc_cell(1);
   }
 
-  define_allocator_memory_pool!(stack_global_buffer, 16, u8, [0; 1024 * 1024 * 20], stack);
+  define_allocator_memory_pool!(stack_global_buffer, 16, u8, [0; 1024 * 1024], stack);
   let mut stackallocator = StackAllocatedFreelist16::<u8>::new_allocator(&mut stack_global_buffer);
   {
     let mut x = stackallocator.alloc_cell(9999);
