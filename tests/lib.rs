@@ -16,21 +16,12 @@ declare_stack_allocator_struct!(StackAllocatedFreelist4, 4, stack);
 declare_stack_allocator_struct!(GlobalAllocatedFreelist, 4, global);
 //trace_macros!(true);
 
-define_heap_memory_structure!(global_buffer, 4, 1024, u8, 0, global);
+define_heap_memory_structure!(global_buffer, 4, u8, [0; 1024], global);
 
 #[test]
 fn stack_test() {
-  let mut global_buffer = [0u8; 65536];
-  let mut ags = StackAllocator::<u8, StackAllocatedFreelist4<u8> > {
-      nop : &mut [],
-      system_resources :  StackAllocatedFreelist4::<u8> {
-          freelist : static_array!(&mut[]; 4),
-      },
-      free_list_start : 4,
-      free_list_overflow_count : 0,
-  };
-  ags.free_cell(AllocatedStackMemory::<u8>{mem:&mut global_buffer});
-
+  define_heap_memory_structure!(stack_global_buffer, 4, u8, [0; 65536], stack);
+  let mut ags = StackAllocatedFreelist4::<u8>::new_allocator(&mut stack_global_buffer);
   {
   let mut x = ags.alloc_cell(9999);
   x.slice_mut()[0] = 4;
