@@ -1,49 +1,25 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #[cfg(test)]
+
+#[macro_use]
+extern crate alloc_no_stdlib;
+
 extern crate core;
 use core::ops;
-use super::{Allocator, SliceWrapperMut, SliceWrapper,
+use alloc_no_stdlib::{Allocator, SliceWrapperMut, SliceWrapper,
             StackAllocator, AllocatedStackMemory};
 
-struct StackAllocatedFreelist4<'a, T : 'a> {
-   freelist : [&'a mut [T]; 4],
-}
-
-
-impl<'a, T: 'a> SliceWrapper<&'a mut[T]> for StackAllocatedFreelist4<'a, T> {
-    fn slice(& self) -> & [&'a mut[T]] {
-        return & self.freelist;
-    }
-}
-
-impl<'a, T: 'a> SliceWrapperMut<&'a mut [T]> for StackAllocatedFreelist4<'a, T> {
-    fn slice_mut(& mut self) ->&mut [&'a mut [T]] {
-        return &mut self.freelist;
-    }
-}
-
-impl<'a, T: 'a> ops::Index<usize> for StackAllocatedFreelist4<'a, T> {
-    type Output = [T];
-    fn index<'b> (&'b self, _index : usize) -> &'b [T] {
-        return &self.freelist[_index];
-    }
-}
-
-impl<'a, T: 'a> ops::IndexMut<usize> for StackAllocatedFreelist4<'a, T> {
-    fn index_mut<'b>(&'b mut self, _index : usize) -> &'b mut [T] {
-        return &mut self.freelist[_index];
-    }
-}
+declare_stack_allocator_struct!(StackAllocatedFreelist4, 4, 65536, stack);
 
 
 #[test]
-fn integration_test() {
-  let mut global_buffer : [u8; 65536] = [0; 65536];
+fn stack_test() {
+  let mut global_buffer = [0u8; 65536];
   let mut ags = StackAllocator::<u8, StackAllocatedFreelist4<u8> > {
       nop : &mut [],
       system_resources :  StackAllocatedFreelist4::<u8> {
-          freelist : [&mut[],&mut[],&mut[],&mut[],],
+          freelist : static_array!(&mut[]; 4),
       },
       free_list_start : 4,
       free_list_overflow_count : 0,

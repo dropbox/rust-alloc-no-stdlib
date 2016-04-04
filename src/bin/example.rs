@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate alloc_no_stdlib as alloc;
+extern crate alloc_no_stdlib;
 extern crate core;
 use core::ops;
 mod heap_alloc;
@@ -10,42 +10,13 @@ mod tests;
 
 
 //use alloc::AllocatedSlice;
-use alloc::SliceWrapper;
-use alloc::SliceWrapperMut;
-use alloc::AllocatedStackMemory;
-use alloc::Allocator;
-use alloc::StackAllocator;
+use alloc_no_stdlib::SliceWrapper;
+use alloc_no_stdlib::SliceWrapperMut;
+use alloc_no_stdlib::AllocatedStackMemory;
+use alloc_no_stdlib::Allocator;
+use alloc_no_stdlib::StackAllocator;
 
-struct StackAllocatedFreelist4<'a, T : 'a> {
-   freelist : [&'a mut [T]; 4],
-}
-
-
-impl<'a, T: 'a> alloc::SliceWrapper<&'a mut[T]> for StackAllocatedFreelist4<'a, T> {
-    fn slice(& self) -> & [&'a mut[T]] {
-        return & self.freelist;
-    }
-}
-
-impl<'a, T: 'a> alloc::SliceWrapperMut<&'a mut [T]> for StackAllocatedFreelist4<'a, T> {
-    fn slice_mut(& mut self) ->&mut [&'a mut [T]] {
-        return &mut self.freelist;
-    }
-}
-
-impl<'a, T: 'a> ops::Index<usize> for StackAllocatedFreelist4<'a, T> {
-    type Output = [T];
-    fn index<'b> (&'b self, _index : usize) -> &'b [T] {
-        return &self.freelist[_index];
-    }
-}
-
-impl<'a, T: 'a> ops::IndexMut<usize> for StackAllocatedFreelist4<'a, T> {
-    fn index_mut<'b>(&'b mut self, _index : usize) -> &'b mut [T] {
-        return &mut self.freelist[_index];
-    }
-}
-
+declare_stack_allocator_struct!(CallocAllocatedFreelist4, 4, 200 * 1024 * 1024, calloc);
 
 extern {
 pub fn calloc(nobj: usize, size: usize) -> *mut u8;
@@ -62,9 +33,9 @@ fn main() {
   let allocated_mem = unsafe {calloc(max_memory_pool_size, core::mem::size_of::<u8>())};
   let global_ptr : *mut u8 = unsafe {core::mem::transmute(allocated_mem)};
   let mut global_buffer = unsafe {core::slice::from_raw_parts_mut(global_ptr, max_memory_pool_size)};
-  let mut ags = StackAllocator::<u8, StackAllocatedFreelist4<u8> > {
+  let mut ags = StackAllocator::<u8, CallocAllocatedFreelist4<u8> > {
       nop : &mut [],
-      system_resources :  StackAllocatedFreelist4::<u8> {
+      system_resources :  CallocAllocatedFreelist4::<u8> {
           freelist : static_array!(&mut[]; 4),
       },
       free_list_start : 4,

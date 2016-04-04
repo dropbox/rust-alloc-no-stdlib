@@ -1,4 +1,4 @@
-use alloc;
+use alloc_no_stdlib;
 use core::ops;
 use core;
 
@@ -19,13 +19,13 @@ impl<T> ops::IndexMut<usize> for Rebox<T>{
     }
 }
 
-impl<T> alloc::SliceWrapper<T> for Rebox<T> {
+impl<T> alloc_no_stdlib::SliceWrapper<T> for Rebox<T> {
     fn slice(&self) -> & [T] {
        return &*self.b
     }
 }
 
-impl<T> alloc::SliceWrapperMut<T> for Rebox<T> {
+impl<T> alloc_no_stdlib::SliceWrapperMut<T> for Rebox<T> {
     fn slice_mut(&mut self) -> &mut [T] {
        return &mut*self.b
     }
@@ -35,7 +35,7 @@ pub struct HeapAllocator<T : core::clone::Clone>{
    pub default_value : T,
 }
 
-impl<T : core::clone::Clone> alloc::Allocator<T> for HeapAllocator<T> {
+impl<T : core::clone::Clone> alloc_no_stdlib::Allocator<T> for HeapAllocator<T> {
    type AllocatedMemory = Rebox<T>;
    fn alloc_cell(self : &mut HeapAllocator<T>, len : usize) -> Rebox<T> {
 
