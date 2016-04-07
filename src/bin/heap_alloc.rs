@@ -6,6 +6,14 @@ pub struct Rebox<T> {
    b : Box<[T]>,
 }
 
+impl<T> core::default::Default for Rebox<T> {
+    fn default() -> Self {
+       let v : Vec<T> = Vec::new();
+       let b = v.into_boxed_slice();
+       return Rebox::<T>{b : b};
+    }
+}
+
 impl<T> ops::Index<usize> for Rebox<T>{
     type Output = T;
     fn index(&self, index : usize) -> &T {

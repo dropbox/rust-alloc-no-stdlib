@@ -2,10 +2,14 @@ extern crate core;
 use super::allocated_memory::SliceWrapper;
 use super::allocated_memory::SliceWrapperMut;
 use core::ops;
-
-
 pub struct AllocatedStackMemory<'a, T:'a> {
     pub mem : &'a mut [T],
+}
+
+impl<'a, T: 'a> core::default::Default for AllocatedStackMemory<'a, T> {
+    fn default() -> Self {
+        return AllocatedStackMemory::<'a, T>{mem : &mut[]};
+    }
 }
 
 impl<'a, T: 'a> ops::Index<usize> for AllocatedStackMemory<'a, T> {

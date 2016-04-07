@@ -40,15 +40,40 @@ macro_rules! static_array {
 #[macro_export]
 macro_rules! define_stack_allocator_traits(
     ($name : ident, global) => {
-        define_stack_allocator_traits!($name, calloc);
+        impl<'a, T: 'a> Default for $name<'a, T> {
+            fn default() -> Self {
+                return $name::<'a, T>{freelist : &mut[],};
+            }
+        }
+        define_stack_allocator_traits!($name, generic);
     };
-    ($name : ident, stack) => {
-        define_stack_allocator_traits!($name, calloc);
+    ($name : ident, $freelist_size : tt, stack) => {
+        impl<'a, T: 'a> Default for $name<'a, T> {
+            fn default() -> Self {
+                return $name::<'a, T>{freelist : static_array!(&mut[]; $freelist_size)};
+            }
+        }
+        define_stack_allocator_traits!($name, generic);
     };
     ($name : ident, heap) => {
-        define_stack_allocator_traits!($name, calloc);
+        impl<'a, T: 'a> Default for $name<'a, T> {
+            fn default() -> Self {
+                let v : Vec<&mut [T]> = Vec::new();
+                let b = v.into_boxed_slice();
+                return $name::<'a, T>{freelist : b};
+            }
+        }
+        define_stack_allocator_traits!($name, generic);
     };
-    ($name : ident, calloc) => {
+    ($name : ident, $freelist_size : tt, calloc) => {
+        impl<'a, T: 'a> Default for $name<'a, T> {
+            fn default() -> Self {
+                return $name::<'a, T>{freelist : static_array!(&mut[]; $freelist_size)};
+            }
+        }
+        define_stack_allocator_traits!($name, generic);
+    };
+    ($name : ident, generic) => {
         impl<'a, T: 'a> SliceWrapper<&'a mut[T]> for $name<'a, T> {
             fn slice(& self) -> & [&'a mut[T]] {
                 return & self.freelist;
@@ -97,7 +122,9 @@ macro_rules! declare_stack_allocator_struct(
         struct $name<'a, T : 'a> {
             freelist : [&'a mut [T]; declare_stack_allocator_struct!(@as_expr $freelist_size)],
         }
-        define_stack_allocator_traits!($name, calloc);
+        define_stack_allocator_traits!($name,
+                                       $freelist_size,
+                                       calloc);
         declare_stack_allocator_struct!( @new_method $name, $freelist_size);
     };
     ($name :ident, heap) => {
@@ -131,7 +158,9 @@ macro_rules! declare_stack_allocator_struct(
             freelist : [&'a mut [T];declare_stack_allocator_struct!(@as_expr $freelist_size)],
             // can't borrow here: make it on stack-- heap : core::cell::RefCell<[T; $heap_size]>
         }
-        define_stack_allocator_traits!($name, stack);
+        define_stack_allocator_traits!($name,
+                                       $freelist_size,
+                                       stack);
         declare_stack_allocator_struct!( @new_method $name, $freelist_size);
     };
     ($name :ident, $freelist_size : expr, global) => {
