@@ -107,9 +107,7 @@ macro_rules! declare_stack_allocator_struct(
           fn new_allocator(global_buffer : &'a mut [T]) -> StackAllocator<'a, T, $name<'a, T> > {
               let mut retval = StackAllocator::<T, $name<T> > {
                   nop : &mut [],
-                  system_resources : $name::<T> {
-                      freelist : static_array!(&mut[]; $freelist_size),
-                  },
+                  system_resources : $name::<T>::default(),
                   free_list_start : declare_stack_allocator_struct!(@as_expr $freelist_size),
                   free_list_overflow_count : 0,
               };
@@ -143,7 +141,7 @@ macro_rules! declare_stack_allocator_struct(
               let mut retval = StackAllocator::<T, $name<T> > {
                   nop : &mut [],
                   system_resources : $name::<T> {
-                      freelist : Self::make_freelist(freelist_size),//(vec![&mut[]; $freelist_size]).into_boxed_slice(),
+                      freelist : Self::make_freelist(freelist_size),
                   },
                   free_list_start : freelist_size,
                   free_list_overflow_count : 0
@@ -170,9 +168,7 @@ macro_rules! declare_stack_allocator_struct(
           fn new_allocator() -> StackAllocator<'a, T, $name<'a, T> > {
               return StackAllocator::<T, $name<T> > {
                   nop : &mut [],
-                  system_resources : $name::<T> {
-                      freelist : &mut[],
-                  },
+                  system_resources : $name::<T>::default(),
                   free_list_start : 0,
                   free_list_overflow_count : 0
               };
