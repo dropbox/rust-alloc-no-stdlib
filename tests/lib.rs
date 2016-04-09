@@ -15,6 +15,7 @@ use alloc_no_stdlib::{Allocator, SliceWrapperMut, SliceWrapper,
 declare_stack_allocator_struct!(HeapAllocatedFreelist, heap);
 declare_stack_allocator_struct!(CallocAllocatedFreelist4096, 4096, calloc);
 declare_stack_allocator_struct!(StackAllocatedFreelist4, 4, stack);
+declare_stack_allocator_struct!(StackAllocatedFreelist8, 8, stack);
 declare_stack_allocator_struct!(GlobalAllocatedFreelist, 16, global);
 //trace_macros!(true);
 
@@ -51,6 +52,79 @@ fn stack_pool_test() {
     let mut _z = ags.alloc_cell(1);
   }
   }
+}
+#[test]
+fn stack_pool_free_null() {
+  define_allocator_memory_pool!(stack_global_buffer, 8, u8, [0; 256 - 8], stack);
+  let mut ags = StackAllocatedFreelist8::<u8>::new_allocator(&mut stack_global_buffer);
+  {
+    let s = ags.alloc_cell(0);
+    //u.slice_mut()[0] = 4;
+    let t = ags.alloc_cell(0);
+    //u.slice_mut()[0] = 4;
+    let u = ags.alloc_cell(0);
+    //u.slice_mut()[0] = 4;
+    let v = ags.alloc_cell(0);
+    //v.slice_mut()[0] = 4;
+    let ss = ags.alloc_cell(0);
+    //u.slice_mut()[0] = 4;
+    let tt = ags.alloc_cell(0);
+    //u.slice_mut()[0] = 4;
+    let uu = ags.alloc_cell(0);
+    //u.slice_mut()[0] = 4;
+    let vv = ags.alloc_cell(0);
+    //v.slice_mut()[0] = 4;
+    let mut w = ags.alloc_cell(31);
+    w.slice_mut()[30] = 4;
+    let mut x = ags.alloc_cell(31);
+    x.slice_mut()[30] = 4;
+    let mut y = ags.alloc_cell(31);
+    y.slice_mut()[30] = 4;
+    let mut z = ags.alloc_cell(31);
+    z.slice_mut()[30] = 4;
+    let mut zz = ags.alloc_cell(31);
+    zz.slice_mut()[30] = 4;
+    let mut xx = ags.alloc_cell(31);
+    xx.slice_mut()[30] = 4;
+    let mut yy = ags.alloc_cell(31);
+    yy.slice_mut()[30] = 4;
+    let mut ww = ags.alloc_cell(31);
+    ww.slice_mut()[30] = 4;
+    ags.free_cell(y);
+    ags.free_cell(x);
+    ags.free_cell(z);
+    ags.free_cell(zz);
+    ags.free_cell(xx);
+    ags.free_cell(yy);
+    ags.free_cell(ww);
+    ags.free_cell(v);
+    ags.free_cell(u);
+    ags.free_cell(s);
+    ags.free_cell(t);
+    ags.free_cell(w);
+    ags.free_cell(vv);
+    ags.free_cell(uu);
+    ags.free_cell(ss);
+    ags.free_cell(tt);
+    let mut a = ags.alloc_cell(31);
+    a.slice_mut()[30] = 4;
+    let mut b = ags.alloc_cell(31);
+    b.slice_mut()[30] = 4;
+    let mut c = ags.alloc_cell(31);
+    c.slice_mut()[30] = 4;
+    let mut d = ags.alloc_cell(31);
+    d.slice_mut()[30] = 4;
+    let mut e = ags.alloc_cell(31);
+    e.slice_mut()[30] = 4;
+    let mut f = ags.alloc_cell(31);
+    f.slice_mut()[30] = 4;
+    let mut g = ags.alloc_cell(31);
+    g.slice_mut()[30] = 4;
+    let mut h = ags.alloc_cell(31);
+    h.slice_mut()[30] = 4;
+
+  }
+
 }
 #[test]
 fn heap_pool_test() {
