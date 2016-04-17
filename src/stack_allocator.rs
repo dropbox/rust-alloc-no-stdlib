@@ -21,7 +21,7 @@ pub struct StackAllocator<'a,
 }
 
 
-impl<'a, T, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
+impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
     Allocator<T> for StackAllocator <'a, T, U> {
     type AllocatedMemory = AllocatedStackMemory<'a, T>;
     fn alloc_cell(self : &mut StackAllocator<'a, T, U>,
