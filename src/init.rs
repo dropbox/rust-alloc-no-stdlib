@@ -104,12 +104,14 @@ macro_rules! declare_stack_allocator_struct(
     (@as_expr $expr : expr) => {$expr};
     (@new_method $name : ident, $freelist_size : tt) => {
         impl<'a, T: 'a> $name<'a, T> {
-          fn new_allocator(global_buffer : &'a mut [T]) -> StackAllocator<'a, T, $name<'a, T> > {
+          fn new_allocator(global_buffer : &'a mut [T],
+                           initializer : fn(&mut[T])) -> StackAllocator<'a, T, $name<'a, T> > {
               let mut retval = StackAllocator::<T, $name<T> > {
                   nop : &mut [],
                   system_resources : $name::<T>::default(),
                   free_list_start : declare_stack_allocator_struct!(@as_expr $freelist_size),
                   free_list_overflow_count : 0,
+                  initialize : initializer,
               };
               retval.free_cell(AllocatedStackMemory::<T>{mem:global_buffer});
               return retval;
@@ -137,14 +139,16 @@ macro_rules! declare_stack_allocator_struct(
               return retval.into_boxed_slice();
           }
           fn new_allocator(freelist_size : usize,
-                           memory_pool : &'a mut Box<[T]>) -> StackAllocator<'a, T, $name<'a, T> > {
+                           memory_pool : &'a mut Box<[T]>,
+                           initializer : fn(&mut[T])) -> StackAllocator<'a, T, $name<'a, T> > {
               let mut retval = StackAllocator::<T, $name<T> > {
                   nop : &mut [],
                   system_resources : $name::<T> {
                       freelist : Self::make_freelist(freelist_size),
                   },
                   free_list_start : freelist_size,
-                  free_list_overflow_count : 0
+                  free_list_overflow_count : 0,
+                  initialize : initializer,
               };
               retval.free_cell(AllocatedStackMemory::<T>{mem:&mut*memory_pool});
               return retval;
@@ -165,12 +169,13 @@ macro_rules! declare_stack_allocator_struct(
        struct $name <'a, T: 'a> {freelist : &'a mut [&'a mut [T]]}
        define_stack_allocator_traits!($name, global);
        impl<'a, T: 'a> $name<'a, T> {
-          fn new_allocator() -> StackAllocator<'a, T, $name<'a, T> > {
+          fn new_allocator(initializer : fn (&mut[T])) -> StackAllocator<'a, T, $name<'a, T> > {
               return StackAllocator::<T, $name<T> > {
                   nop : &mut [],
                   system_resources : $name::<T>::default(),
                   free_list_start : 0,
-                  free_list_overflow_count : 0
+                  free_list_overflow_count : 0,
+                  initialize : initializer,
               };
           }
        }

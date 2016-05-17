@@ -10,17 +10,27 @@ pub trait Allocator<T> {
 }
 
 
-
 pub struct StackAllocator<'a,
                            T :'a,
-                           U : allocated_memory::AllocatedSlice<&'a mut [T]> > {
+                           U : allocated_memory::AllocatedSlice<&'a mut [T]>> {
     pub nop : &'a mut [T],
     pub system_resources : U,
     pub free_list_start : usize,
     pub free_list_overflow_count : usize,
+    pub initialize : fn(&mut[T]),
 }
 
-
+impl <'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
+     StackAllocator <'a, T, U> {
+    fn clear_if_necessary(self : &Self, index : usize, data : AllocatedStackMemory<'a, T>)
+    -> AllocatedStackMemory<'a, T> {
+        if index + 1 != self.system_resources.slice().len() {
+            let fnp = self.initialize;
+            fnp(data.mem);
+        }
+        return data;
+    }
+}
 impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
     Allocator<T> for StackAllocator <'a, T, U> {
     type AllocatedMemory = AllocatedStackMemory<'a, T>;
@@ -57,11 +67,12 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
                                    farthest_free_list);
             }
             self.free_list_start += 1;
-            return AllocatedStackMemory::<'a, T>{mem:available_slice};
+            return self.clear_if_necessary(index,
+                                           AllocatedStackMemory::<'a, T>{mem:available_slice});
         } else { // the memory allocated was not the entire range of items. Split and move on
             let (mut retval, return_to_sender) = available_slice.split_at_mut(len);
             core::mem::replace(&mut self.system_resources.slice_mut()[index], return_to_sender);
-            return AllocatedStackMemory::<'a, T>{mem:retval};
+            return self.clear_if_necessary(index, AllocatedStackMemory::<'a, T>{mem:retval});
         }
     }
     fn free_cell(self : &mut StackAllocator<'a, T, U>,

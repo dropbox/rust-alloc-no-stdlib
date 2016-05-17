@@ -16,6 +16,8 @@ use alloc_no_stdlib::SliceWrapperMut;
 use alloc_no_stdlib::AllocatedStackMemory;
 use alloc_no_stdlib::Allocator;
 use alloc_no_stdlib::StackAllocator;
+
+use alloc_no_stdlib::bzero;
 declare_stack_allocator_struct!(CallocAllocatedFreelist4, 4, calloc);
 declare_stack_allocator_struct!(StackAllocatedFreelist16, 16, stack);
 declare_stack_allocator_struct!(BoxAllocatedFreelist, heap);
@@ -39,7 +41,7 @@ fn main() {
 //trace_macros!(true);
   define_allocator_memory_pool!(global_buffer, 4, u8, [0; 1024 * 1024 * 200], calloc);
 
-  let mut ags = CallocAllocatedFreelist4::<u8>::new_allocator(global_buffer);
+  let mut ags = CallocAllocatedFreelist4::<u8>::new_allocator(global_buffer, bzero);
 
   {
   let mut x = ags.alloc_cell(9999);
@@ -62,7 +64,7 @@ fn main() {
   }
   define_allocator_memory_pool!(zero_global_buffer, 4, u8, [0; 1024 * 1024 * 20], heap);
 
-  let mut boxallocator = BoxAllocatedFreelist::<u8>::new_allocator(1024 * 1024, &mut zero_global_buffer);
+  let mut boxallocator = BoxAllocatedFreelist::<u8>::new_allocator(1024 * 1024, &mut zero_global_buffer, bzero);
 
   {
     let mut x = boxallocator.alloc_cell(9999);
@@ -85,7 +87,7 @@ fn main() {
   }
 
   define_allocator_memory_pool!(stack_global_buffer, 16, u8, [0; 1024 * 1024], stack);
-  let mut stackallocator = StackAllocatedFreelist16::<u8>::new_allocator(&mut stack_global_buffer);
+  let mut stackallocator = StackAllocatedFreelist16::<u8>::new_allocator(&mut stack_global_buffer, bzero);
   {
     let mut x = stackallocator.alloc_cell(9999);
     x.slice_mut()[0] = 3;

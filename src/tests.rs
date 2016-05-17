@@ -47,6 +47,7 @@ fn integration_test() {
       },
       free_list_start : 4,
       free_list_overflow_count : 0,
+      initializer : bzero,
   };
   ags.free_cell(AllocatedStackMemory::<u8>{mem:&mut global_buffer});
 
