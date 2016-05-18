@@ -16,7 +16,7 @@ use alloc_no_stdlib::SliceWrapperMut;
 use alloc_no_stdlib::AllocatedStackMemory;
 use alloc_no_stdlib::Allocator;
 use alloc_no_stdlib::StackAllocator;
-
+use alloc_no_stdlib::CallocBackingStore;
 use alloc_no_stdlib::bzero;
 declare_stack_allocator_struct!(CallocAllocatedFreelist4, 4, calloc);
 declare_stack_allocator_struct!(StackAllocatedFreelist16, 16, stack);

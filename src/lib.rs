@@ -22,3 +22,36 @@ pub fn bzero<T : Default> (data : &mut [T]) {
 }
 
 pub fn uninitialized<T> (_data : &mut[T]) {}
+
+
+pub struct CallocBackingStore<'a, T : 'a> {
+    pub raw_data : *mut T,
+    pub data : &'a mut[T],
+}
+extern {
+  fn calloc(n_elem : usize, el_size : usize) -> *mut u8;
+}
+extern {
+  fn free(ptr : *mut u8);
+}
+impl<'a, T : 'a> CallocBackingStore<'a, T> {
+  pub fn new(num_elements : usize) -> Self{
+     unsafe {
+        let retval = calloc(num_elements, core::mem::size_of::<T>());
+        let mut raw_data : *mut T = core::mem::transmute(retval);
+        return CallocBackingStore::<'a, T>{
+           raw_data : raw_data,
+           data : unsafe{core::slice::from_raw_parts_mut(raw_data,
+                                                         num_elements)},
+        };
+     }
+  }
+}
+impl<'a, T:'a> Drop for CallocBackingStore<'a, T> {
+  fn drop(self :&mut Self) {
+    unsafe {
+      let to_be_freed : *mut u8 = core::mem::transmute(self.raw_data);
+      free(to_be_freed);
+    }
+  }
+}

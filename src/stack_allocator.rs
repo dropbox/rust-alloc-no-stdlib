@@ -98,4 +98,3 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
         }
     }
 }
-

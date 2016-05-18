@@ -4,7 +4,7 @@
 extern crate core;
 use core::ops;
 use super::{Allocator, SliceWrapperMut, SliceWrapper,
-            StackAllocator, AllocatedStackMemory};
+            StackAllocator, AllocatedStackMemory, CallocBackingStore};
 
 struct StackAllocatedFreelist4<'a, T : 'a> {
    freelist : [&'a mut [T]; 4],

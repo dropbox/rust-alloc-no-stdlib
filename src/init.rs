@@ -118,6 +118,24 @@ macro_rules! declare_stack_allocator_struct(
           }
         }
     };
+
+    (@new_calloc_method $name : ident, $freelist_size : tt) => {
+        impl<'a, T: 'a> $name<'a, T> {
+          fn new_allocator(global_buffer : alloc_no_stdlib::CallocBackingStore<'a, T>,
+                           initializer : fn(&mut[T])) -> StackAllocator<'a, T, $name<'a, T> > {
+              let mut retval = StackAllocator::<T, $name<T> > {
+                  nop : &mut [],
+                  system_resources : $name::<T>::default(),
+                  free_list_start : declare_stack_allocator_struct!(@as_expr $freelist_size),
+                  free_list_overflow_count : 0,
+                  initialize : initializer,
+              };
+              retval.free_cell(AllocatedStackMemory::<T>{mem:global_buffer.data});
+              return retval;
+          }
+        }
+    };
+
     ($name :ident, $freelist_size : tt, calloc) => {
         struct $name<'a, T : 'a> {
             freelist : [&'a mut [T]; declare_stack_allocator_struct!(@as_expr $freelist_size)],
@@ -125,7 +143,7 @@ macro_rules! declare_stack_allocator_struct(
         define_stack_allocator_traits!($name,
                                        $freelist_size,
                                        calloc);
-        declare_stack_allocator_struct!( @new_method $name, $freelist_size);
+        declare_stack_allocator_struct!( @new_calloc_method $name, $freelist_size);
     };
     ($name :ident, heap) => {
         struct $name<'a, T : 'a> {freelist : Box<[&'a mut [T]]>,}
@@ -196,13 +214,7 @@ macro_rules! define_allocator_memory_pool(
 
 
     ($name : ident, $freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc) => {
-       unsafe fn $name<T : Sized>(num_elements : usize) -> *mut T {
-           let retval = calloc(num_elements, core::mem::size_of::<T>());
-           return core::mem::transmute(retval);
-       }
-
-       let mut $name : &mut [$T] = unsafe{core::slice::from_raw_parts_mut(
-           $name::<$T>($heap_size), $heap_size)};
+       let mut $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size);
     };
     ($name : ident, $freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], heap) => {
        let mut $name : Box<[$T]> = (vec![$default_value; $heap_size]).into_boxed_slice();

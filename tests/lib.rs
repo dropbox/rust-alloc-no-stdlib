@@ -162,7 +162,7 @@ fn uninitialized_calloc_pool_test() {
 
   {
   define_allocator_memory_pool!(calloc_global_buffer, 4096, u8, [0; 200 * 1024 * 1024], calloc);
-  let mut ags = CallocAllocatedFreelist4096::<u8>::new_allocator(&mut calloc_global_buffer, uninitialized);
+  let mut ags = CallocAllocatedFreelist4096::<u8>::new_allocator(calloc_global_buffer, uninitialized);
   {
     let mut x = ags.alloc_cell(9999);
     x.slice_mut()[0] = 4;
@@ -357,7 +357,7 @@ fn calloc_pool_test() {
 
   {
   define_allocator_memory_pool!(calloc_global_buffer, 4096, u8, [0; 200 * 1024 * 1024], calloc);
-  let mut ags = CallocAllocatedFreelist4096::<u8>::new_allocator(&mut calloc_global_buffer, bzero);
+  let mut ags = CallocAllocatedFreelist4096::<u8>::new_allocator(calloc_global_buffer, bzero);
   {
     let mut x = ags.alloc_cell(9999);
     x.slice_mut()[0] = 4;
