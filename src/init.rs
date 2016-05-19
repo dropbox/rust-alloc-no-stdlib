@@ -68,7 +68,7 @@ macro_rules! define_stack_allocator_traits(
     ($name : ident, $freelist_size : tt, calloc) => {
         impl<'a, T: 'a> Default for $name<'a, T> {
             fn default() -> Self {
-                return $name::<'a, T>{freelist : static_array!(&mut[]; $freelist_size)};
+                return $name::<'a, T>{freelist : static_array!(&mut[]; $freelist_size), backing_store : None};
             }
         }
         define_stack_allocator_traits!($name, generic);
@@ -121,7 +121,7 @@ macro_rules! declare_stack_allocator_struct(
 
     (@new_calloc_method $name : ident, $freelist_size : tt) => {
         impl<'a, T: 'a> $name<'a, T> {
-          fn new_allocator(global_buffer : alloc_no_stdlib::CallocBackingStore<'a, T>,
+          fn new_allocator(mut global_buffer : alloc_no_stdlib::CallocBackingStore<'a, T>,
                            initializer : fn(&mut[T])) -> StackAllocator<'a, T, $name<'a, T> > {
               let mut retval = StackAllocator::<T, $name<T> > {
                   nop : &mut [],
@@ -130,7 +130,8 @@ macro_rules! declare_stack_allocator_struct(
                   free_list_overflow_count : 0,
                   initialize : initializer,
               };
-              retval.free_cell(AllocatedStackMemory::<T>{mem:global_buffer.data});
+              retval.free_cell(AllocatedStackMemory::<T>{mem:core::mem::replace(&mut global_buffer.data, &mut[])});
+              retval.system_resources.backing_store = Some(global_buffer);
               return retval;
           }
         }
@@ -139,6 +140,7 @@ macro_rules! declare_stack_allocator_struct(
     ($name :ident, $freelist_size : tt, calloc) => {
         struct $name<'a, T : 'a> {
             freelist : [&'a mut [T]; declare_stack_allocator_struct!(@as_expr $freelist_size)],
+            backing_store : Option<alloc_no_stdlib::CallocBackingStore<'a, T> >,
         }
         define_stack_allocator_traits!($name,
                                        $freelist_size,
@@ -214,7 +216,10 @@ macro_rules! define_allocator_memory_pool(
 
 
     ($name : ident, $freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc) => {
-       let mut $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size);
+       let mut $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, true);
+    };
+    ($name : ident, $freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc_no_free) => {
+       let mut $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, false);
     };
     ($name : ident, $freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], heap) => {
        let mut $name : Box<[$T]> = (vec![$default_value; $heap_size]).into_boxed_slice();

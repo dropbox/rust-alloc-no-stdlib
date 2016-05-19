@@ -186,6 +186,7 @@ fn uninitialized_calloc_pool_test() {
     assert_eq!(reget_three[1], 9);
     let mut _z = ags.alloc_cell(1);
   }
+println!("{:?}", ags.free_list_start);
   }
 }
 #[test]
@@ -383,6 +384,41 @@ fn calloc_pool_test() {
   }
   }
 }
+
+
+
+#[test]
+fn calloc_leak_pool_test() {
+
+  {
+  define_allocator_memory_pool!(calloc_global_buffer, 4096, u8, [0; 200 * 1024 * 1024], calloc_no_free);
+  let mut ags = CallocAllocatedFreelist4096::<u8>::new_allocator(calloc_global_buffer, bzero);
+  {
+    let mut x = ags.alloc_cell(9999);
+    x.slice_mut()[0] = 4;
+    let mut y = ags.alloc_cell(4);
+    y[0] = 5;
+    ags.free_cell(y);
+
+    let mut three = ags.alloc_cell(3);
+    three[0] = 6;
+    ags.free_cell(three);
+
+    let mut z = ags.alloc_cell(4);
+    z.slice_mut()[1] = 8;
+    let mut reget_three = ags.alloc_cell(4);
+    reget_three.slice_mut()[1] = 9;
+    //y.mem[0] = 6; // <-- this is an error (use after free)
+    assert_eq!(x[0], 4);
+    assert_eq!(z[0], 0);
+    assert_eq!(z[1], 8);
+    assert_eq!(reget_three[0], 0);
+    assert_eq!(reget_three[1], 9);
+    let mut _z = ags.alloc_cell(1);
+  }
+  }
+}
+
 #[test]
 fn global_pool_test() {
   {
