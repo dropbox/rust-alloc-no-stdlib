@@ -216,10 +216,10 @@ macro_rules! define_allocator_memory_pool(
 
 
     ($name : ident, $freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc) => {
-       let mut $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, true);
+       let $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, true);
     };
     ($name : ident, $freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc_no_free) => {
-       let mut $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, false);
+       let $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, false);
     };
     ($name : ident, $freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], heap) => {
        let mut $name : Box<[$T]> = (vec![$default_value; $heap_size]).into_boxed_slice();
