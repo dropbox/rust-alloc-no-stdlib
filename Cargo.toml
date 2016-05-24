@@ -7,7 +7,7 @@ documentation = "https://raw.githubusercontent.com/dropbox/rust-alloc-no-stdlib/
 homepage = "https://github.com/dropbox/rust-alloc-no-stdlib"
 readme = "README.md"
 keywords = ["custom", "allocator", "calloc", "safe", "nostd"]
-license = "BSD license"
+license = "BSD-3-Clause"
 repository = "https://github.com/dropbox/rust-alloc-no-stdlib"
 
 [[bin]]
