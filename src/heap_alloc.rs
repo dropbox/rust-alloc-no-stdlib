@@ -1,4 +1,4 @@
-#![cfg(feature="stdlib")]
+#![cfg(not(feature="no-stdlib"))]
 use std;
 
 

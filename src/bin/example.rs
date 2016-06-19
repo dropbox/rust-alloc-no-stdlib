@@ -6,7 +6,7 @@ use core::ops;
 mod heap_alloc;
 
 pub use heap_alloc::HeapAllocator;
-#[cfg(feature="stdlib")]
+#[cfg(not(feature="no-stdlib"))]
 use alloc_no_stdlib::HeapPrealloc;
 mod tests;
 extern {
@@ -27,11 +27,11 @@ use alloc_no_stdlib::StackAllocator;
 use alloc_no_stdlib::bzero;
 declare_stack_allocator_struct!(CallocAllocatedFreelist4, 4, calloc);
 declare_stack_allocator_struct!(StackAllocatedFreelist16, 16, stack);
-#[cfg(not(feature="stdlib"))]
+#[cfg(feature="no-stdlib")]
 fn show_heap_prealloc() {
 
 }
-#[cfg(feature="stdlib")]
+#[cfg(not(feature="no-stdlib"))]
 fn show_heap_prealloc() {
   let mut zero_global_buffer = define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 20], heap);
 

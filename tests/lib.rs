@@ -12,10 +12,10 @@ use core::ops;
 use alloc_no_stdlib::{Allocator, SliceWrapperMut, SliceWrapper,
             StackAllocator, AllocatedStackMemory, uninitialized, bzero};
 
-#[cfg(feature="stdlib")]
+#[cfg(not(feature="no-stdlib"))]
 use alloc_no_stdlib::{HeapPrealloc, HeapAlloc};
 
-#[cfg(all(feature="stdlib", feature="unsafe"))]
+#[cfg(all(not(feature="no-stdlib"),feature="unsafe"))]
 use alloc_no_stdlib::{HeapAllocUninitialized};
 
 declare_stack_allocator_struct!(CallocAllocatedFreelist4096, 4096, calloc);
@@ -136,7 +136,7 @@ fn uninitialized_stack_pool_free_null() {
 
 }
 #[test]
-#[cfg(all(feature="stdlib",feature="unsafe"))]
+#[cfg(all(feature="unsafe",not(feature="no-stdlib")))]
 fn uninitialized_heap_pool_test() {
   {
   let mut heap_global_buffer = unsafe{HeapPrealloc::<u8>::new_uninitialized_memory_pool(6 * 1024 * 1024)};
@@ -335,7 +335,7 @@ fn stack_pool_free_null() {
 
 }
 #[test]
-#[cfg(feature="stdlib")]
+#[cfg(not(feature="no-stdlib"))]
 fn heap_pool_test() {
   {
   let mut heap_global_buffer = define_allocator_memory_pool!(4096, u8, [0; 6 * 1024 * 1024], heap);
