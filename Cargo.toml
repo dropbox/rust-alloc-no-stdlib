@@ -12,3 +12,7 @@ repository = "https://github.com/dropbox/rust-alloc-no-stdlib"
 
 [[bin]]
 name = "example"
+
+[features]
+unsafe = []
+stdlib = []

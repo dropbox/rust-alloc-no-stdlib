@@ -36,7 +36,6 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
     type AllocatedMemory = AllocatedStackMemory<'a, T>;
     fn alloc_cell(self : &mut StackAllocator<'a, T, U>,
                   len : usize) -> AllocatedStackMemory<'a, T> {
-        println!("Allocated {:}", len);
         if len == 0 {
             return AllocatedStackMemory::<'a, T>::default();
         }
@@ -81,7 +80,6 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
         if val.slice().len() == 0 {
             return;
         }
-        println!("Freed {:}", val.slice().len());
         if self.free_list_start > 0 {
             self.free_list_start -=1;
             core::mem::replace(&mut self.system_resources.slice_mut()[self.free_list_start],
