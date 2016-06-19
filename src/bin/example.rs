@@ -6,7 +6,8 @@ use core::ops;
 mod heap_alloc;
 
 pub use heap_alloc::HeapAllocator;
-
+#[cfg(feature="stdlib")]
+use alloc_no_stdlib::HeapPrealloc;
 mod tests;
 extern {
   fn calloc(n_elem : usize, el_size : usize) -> *mut u8;
@@ -26,7 +27,36 @@ use alloc_no_stdlib::StackAllocator;
 use alloc_no_stdlib::bzero;
 declare_stack_allocator_struct!(CallocAllocatedFreelist4, 4, calloc);
 declare_stack_allocator_struct!(StackAllocatedFreelist16, 16, stack);
-declare_stack_allocator_struct!(BoxAllocatedFreelist, heap);
+#[cfg(not(feature="stdlib"))]
+fn show_heap_prealloc() {
+
+}
+#[cfg(feature="stdlib")]
+fn show_heap_prealloc() {
+  let mut zero_global_buffer = define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 20], heap);
+
+  let mut boxallocator = HeapPrealloc::<u8>::new_allocator(1024 * 1024, &mut zero_global_buffer, bzero);
+
+  {
+    let mut x = boxallocator.alloc_cell(9999);
+    x.slice_mut()[0] = 3;
+    let mut y = boxallocator.alloc_cell(4);
+    y[0] = 5;
+    boxallocator.free_cell(y);
+
+    let mut three = boxallocator.alloc_cell(3);
+    three[0] = 6;
+    boxallocator.free_cell(three);
+
+    let mut z = boxallocator.alloc_cell(4);
+    z.slice_mut()[1] = 8;
+    let mut reget_three = boxallocator.alloc_cell(4);
+    reget_three.slice_mut()[1] = 9;
+    //y.mem[0] = 6; // <-- this is an error (use after free)
+    println!("x[0] = {:?} z[0] = {:?}  z[1] = {:?} r3[0] = {:?} r3[1] = {:?}", x.mem[0], z.mem[0], z.mem[1], reget_three[0], reget_three.slice()[1]);
+    let mut _z = boxallocator.alloc_cell(1);
+  }
+}
 
 fn main() {
   let mut global_buffer = unsafe {define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 200], calloc)};
@@ -56,29 +86,7 @@ fn main() {
   }
   }
   }
-  let mut zero_global_buffer = define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 20], heap);
 
-  let mut boxallocator = BoxAllocatedFreelist::<u8>::new_allocator(1024 * 1024, &mut zero_global_buffer, bzero);
-
-  {
-    let mut x = boxallocator.alloc_cell(9999);
-    x.slice_mut()[0] = 3;
-    let mut y = boxallocator.alloc_cell(4);
-    y[0] = 5;
-    boxallocator.free_cell(y);
-
-    let mut three = boxallocator.alloc_cell(3);
-    three[0] = 6;
-    boxallocator.free_cell(three);
-
-    let mut z = boxallocator.alloc_cell(4);
-    z.slice_mut()[1] = 8;
-    let mut reget_three = boxallocator.alloc_cell(4);
-    reget_three.slice_mut()[1] = 9;
-    //y.mem[0] = 6; // <-- this is an error (use after free)
-    println!("x[0] = {:?} z[0] = {:?}  z[1] = {:?} r3[0] = {:?} r3[1] = {:?}", x.mem[0], z.mem[0], z.mem[1], reget_three[0], reget_three.slice()[1]);
-    let mut _z = boxallocator.alloc_cell(1);
-  }
 
   let mut stack_global_buffer = define_allocator_memory_pool!(16, u8, [0; 1024 * 1024], stack);
   let mut stackallocator = StackAllocatedFreelist16::<u8>::new_allocator(&mut stack_global_buffer, bzero);
@@ -102,8 +110,6 @@ fn main() {
     let mut _z = stackallocator.alloc_cell(1);
   }
 
-
-
   let mut halloc : HeapAllocator<u8> = HeapAllocator::<u8>{default_value: 0};
   for _i in 1..10 { // heap test
       let mut x = halloc.alloc_cell(100000);
@@ -116,4 +122,5 @@ fn main() {
       println!("x[0] {:?} x[9] {:?} y[0] {:?} z[0] {:?}",
                x[0], x[9], -999, z[0]);
   }
+  show_heap_prealloc();
 }

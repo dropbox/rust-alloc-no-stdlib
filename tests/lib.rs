@@ -12,7 +12,12 @@ use core::ops;
 use alloc_no_stdlib::{Allocator, SliceWrapperMut, SliceWrapper,
             StackAllocator, AllocatedStackMemory, uninitialized, bzero};
 
-declare_stack_allocator_struct!(HeapAllocatedFreelist, heap);
+#[cfg(feature="stdlib")]
+use alloc_no_stdlib::{HeapPrealloc, HeapAlloc};
+
+#[cfg(all(feature="stdlib", feature="unsafe"))]
+use alloc_no_stdlib::{HeapAllocUninitialized};
+
 declare_stack_allocator_struct!(CallocAllocatedFreelist4096, 4096, calloc);
 declare_stack_allocator_struct!(MallocAllocatedFreelist4096, 4096, malloc);
 declare_stack_allocator_struct!(StackAllocatedFreelist4, 4, stack);
@@ -131,10 +136,11 @@ fn uninitialized_stack_pool_free_null() {
 
 }
 #[test]
+#[cfg(all(feature="stdlib",feature="unsafe"))]
 fn uninitialized_heap_pool_test() {
   {
-  let mut heap_global_buffer = define_allocator_memory_pool!(4096, u8, [0; 6 * 1024 * 1024], heap);
-  let mut ags = HeapAllocatedFreelist::<u8>::new_allocator(4096, &mut heap_global_buffer, uninitialized);
+  let mut heap_global_buffer = unsafe{HeapPrealloc::<u8>::new_uninitialized_memory_pool(6 * 1024 * 1024)};
+  let mut ags = HeapPrealloc::<u8>::new_allocator(4096, &mut heap_global_buffer, uninitialized);
   {
     let mut x = ags.alloc_cell(9999);
     x.slice_mut()[0] = 4;
@@ -329,10 +335,11 @@ fn stack_pool_free_null() {
 
 }
 #[test]
+#[cfg(feature="stdlib")]
 fn heap_pool_test() {
   {
   let mut heap_global_buffer = define_allocator_memory_pool!(4096, u8, [0; 6 * 1024 * 1024], heap);
-  let mut ags = HeapAllocatedFreelist::<u8>::new_allocator(4096, &mut heap_global_buffer, bzero);
+  let mut ags = HeapPrealloc::<u8>::new_allocator(4096, &mut heap_global_buffer, bzero);
   {
     let mut x = ags.alloc_cell(9999);
     x.slice_mut()[0] = 4;

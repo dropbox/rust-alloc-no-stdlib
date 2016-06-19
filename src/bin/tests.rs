@@ -4,9 +4,9 @@ extern crate core;
 use alloc_no_stdlib::Allocator;
 use super::HeapAllocator;
 #[cfg(feature="stdlib")]
-use alloc_no_stdlib::StdAlloc;
+use alloc_no_stdlib::HeapAlloc;
 #[cfg(all(feature="unsafe", feature="stdlib"))]
-use alloc_no_stdlib::StdAllocUninitialized;
+use alloc_no_stdlib::HeapAllocUninitialized;
 #[test]
 fn heap_test() {
   let mut halloc : HeapAllocator<u8> = HeapAllocator::<u8>{default_value: 0};
@@ -30,7 +30,7 @@ fn heap_test() {
 #[cfg(all(feature="unsafe", feature="stdlib"))]
 #[test]
 fn std_unsafe_heap_test() {
-  let mut halloc = unsafe{StdAllocUninitialized::<u8>::new()};
+  let mut halloc = unsafe{HeapAllocUninitialized::<u8>::new()};
   for _i in 1..10 { // heap test
       let mut x = halloc.alloc_cell(100000);
       x[0] = 4;
@@ -50,7 +50,7 @@ fn std_unsafe_heap_test() {
 #[cfg(feature="stdlib")]
 #[test]
 fn std_heap_test() {
-  let mut halloc = unsafe{StdAllocUninitialized::<u8>::new()};
+  let mut halloc = unsafe{HeapAllocUninitialized::<u8>::new()};
   for _i in 1..10 { // heap test
       let mut x = halloc.alloc_cell(100000);
       x[0] = 4;

@@ -151,34 +151,6 @@ macro_rules! declare_stack_allocator_struct(
                                        calloc);
         declare_stack_allocator_struct!( @new_calloc_method $name, $freelist_size);
     };
-    ($name :ident, heap) => {
-        struct $name<'a, T : 'a> {freelist : Box<[&'a mut [T]]>,}
-        define_stack_allocator_traits!($name, heap);
-        impl<'a, T: 'a> $name<'a, T> {
-          fn make_freelist(freelist_size : usize) -> Box<[&'a mut[T]]> {
-              let mut retval = Vec::<&'a mut[T]>::with_capacity(freelist_size);
-              for _i in 0..freelist_size {
-                  retval.push(&mut[]);
-              }
-              return retval.into_boxed_slice();
-          }
-          fn new_allocator(freelist_size : usize,
-                           memory_pool : &'a mut Box<[T]>,
-                           initializer : fn(&mut[T])) -> StackAllocator<'a, T, $name<'a, T> > {
-              let mut retval = StackAllocator::<T, $name<T> > {
-                  nop : &mut [],
-                  system_resources : $name::<T> {
-                      freelist : Self::make_freelist(freelist_size),
-                  },
-                  free_list_start : freelist_size,
-                  free_list_overflow_count : 0,
-                  initialize : initializer,
-              };
-              retval.free_cell(AllocatedStackMemory::<T>{mem:&mut*memory_pool});
-              return retval;
-          }
-        }
-    };
     ($name :ident, $freelist_size : tt, stack) => {
         struct $name<'a, T : 'a> {
             freelist : [&'a mut [T];declare_stack_allocator_struct!(@as_expr $freelist_size)],
@@ -249,21 +221,3 @@ macro_rules! define_allocator_memory_pool(
 );
 
 
-/*
-#[macro_export]
-macro_rules! initialize_allocator(
-    (@as_expr $expr:expr) => {$expr};
-
-
-    ($name : ident, $freelist_size : tt, $T : ty, calloc) => {
-        StackAllocator::<$T, $name<$T> > {
-            nop : &mut [],
-            system_resources : $name::<$T> {
-                freelist : static_array!(&mut[]; $freelist_size),
-            },
-            free_list_start : $freelist_size,
-            free_list_overflow_count : 0,
-        }
-    };
-);
-*/
