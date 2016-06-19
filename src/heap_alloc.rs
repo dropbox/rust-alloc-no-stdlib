@@ -48,6 +48,11 @@ impl<T> super::SliceWrapperMut<T> for WrapBox<T> {
 pub struct HeapAlloc<T : core::clone::Clone>{
    pub default_value : T,
 }
+impl<T : core::clone::Clone> HeapAlloc<T> {
+   pub fn new(data : T) -> HeapAlloc<T> {
+      return HeapAlloc::<T>{default_value : data};
+   }
+}
 
 impl<T : core::clone::Clone> super::Allocator<T> for HeapAlloc<T> {
    type AllocatedMemory = WrapBox<T>;

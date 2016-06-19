@@ -50,7 +50,7 @@ fn std_unsafe_heap_test() {
 #[cfg(feature="stdlib")]
 #[test]
 fn std_heap_test() {
-  let mut halloc = unsafe{HeapAllocUninitialized::<u8>::new()};
+  let mut halloc = HeapAlloc::<u8>::new(0);
   for _i in 1..10 { // heap test
       let mut x = halloc.alloc_cell(100000);
       x[0] = 4;
