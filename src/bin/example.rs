@@ -29,21 +29,11 @@ declare_stack_allocator_struct!(StackAllocatedFreelist16, 16, stack);
 declare_stack_allocator_struct!(BoxAllocatedFreelist, heap);
 
 fn main() {
-  //let mut global_buffer : [u8; 1024 * 4096] = [0;4096*1024];
-  //let max_memory_pool_size : usize = 1024 * 1024 * 200;
-
-  //// let global_buffer_vec : Vec<u8> = vec![0; max_memory_pool_size];
-  //// //let global_buffer_vec = std::iter::repeat(0u8).take(max_memory_pool_size).collect::<Vec<u8>>();
-  //// let mut global_buffer_box = global_buffer_vec.into_boxed_slice();
-
-  //// let mut global_buffer = &mut *global_buffer_box;
-  //let allocated_mem = unsafe {calloc(max_memory_pool_size, core::mem::size_of::<u8>())};
-  //let global_ptr : *mut u8 = unsafe {core::mem::transmute(allocated_mem)};
-  //let mut global_buffer = unsafe {core::slice::from_raw_parts_mut(global_ptr, max_memory_pool_size)};
-//trace_macros!(true);
-  let global_buffer = unsafe {define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 200], calloc)};
-  //let global_buffer = alloc_no_stdlib::CallocBackingStore<u8>(1024 * 1024 * 200, alloc_no_stdlib::AllocatorC::Calloc(calloc), free, true);
-  let mut ags = CallocAllocatedFreelist4::<u8>::new_allocator(global_buffer, bzero);
+  let mut global_buffer = unsafe {define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 200], calloc)};
+  {
+  let mut gbref = &mut global_buffer;
+{
+  let mut ags = CallocAllocatedFreelist4::<u8>::new_allocator(gbref.data, bzero);
 
   {
   let mut x = ags.alloc_cell(9999);
@@ -63,6 +53,8 @@ fn main() {
   //y.mem[0] = 6; // <-- this is an error (use after free)
   println!("x[0] = {:?} z[0] = {:?}  z[1] = {:?} r3[0] = {:?} r3[1] = {:?}", x.mem[0], z.mem[0], z.mem[1], reget_three[0], reget_three.slice()[1]);
   let mut _z = ags.alloc_cell(1);
+  }
+  }
   }
   let mut zero_global_buffer = define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 20], heap);
 

@@ -72,7 +72,7 @@ macro_rules! define_stack_allocator_traits(
     
         impl<'a, T: 'a> Default for $name<'a, T> {
             fn default() -> Self {
-                return $name::<'a, T>{freelist : static_array!(&mut[]; $freelist_size), backing_store : None};
+                return $name::<'a, T>{freelist : static_array!(&mut[]; $freelist_size)};
             }
         }
         define_stack_allocator_traits!($name, generic);
@@ -125,7 +125,7 @@ macro_rules! declare_stack_allocator_struct(
 
     (@new_calloc_method $name : ident, $freelist_size : tt) => {
         impl<'a, T: 'a> $name<'a, T> {
-          fn new_allocator(mut global_buffer : alloc_no_stdlib::CallocBackingStore<'a, T>,
+          fn new_allocator(mut global_buffer : &'a mut [T],
                            initializer : fn(&mut[T])) -> StackAllocator<'a, T, $name<'a, T> > {
               let mut retval = StackAllocator::<T, $name<T> > {
                   nop : &mut [],
@@ -134,8 +134,7 @@ macro_rules! declare_stack_allocator_struct(
                   free_list_overflow_count : 0,
                   initialize : initializer,
               };
-              retval.free_cell(AllocatedStackMemory::<T>{mem:core::mem::replace(&mut global_buffer.data, &mut[])});
-              retval.system_resources.backing_store = Some(global_buffer);
+              retval.free_cell(AllocatedStackMemory::<T>{mem:core::mem::replace(&mut global_buffer, &mut[])});
               return retval;
           }
         }
@@ -146,7 +145,6 @@ macro_rules! declare_stack_allocator_struct(
     ($name :ident, $freelist_size : tt, calloc) => {
         struct $name<'a, T : 'a> {
             freelist : [&'a mut [T]; declare_stack_allocator_struct!(@as_expr $freelist_size)],
-            backing_store : Option<alloc_no_stdlib::CallocBackingStore<'a, T> >,
         }
         define_stack_allocator_traits!($name,
                                        $freelist_size,

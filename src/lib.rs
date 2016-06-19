@@ -1,7 +1,7 @@
 #![no_std]
 
-//#[macro_use]
-//extern crate std;
+#[macro_use]
+extern crate std;
 mod allocated_memory;
 mod stack_allocator;
 mod allocated_stack_memory;
