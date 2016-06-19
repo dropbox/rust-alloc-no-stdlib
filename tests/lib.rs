@@ -14,20 +14,23 @@ use alloc_no_stdlib::{Allocator, SliceWrapperMut, SliceWrapper,
 
 declare_stack_allocator_struct!(HeapAllocatedFreelist, heap);
 declare_stack_allocator_struct!(CallocAllocatedFreelist4096, 4096, calloc);
+declare_stack_allocator_struct!(MallocAllocatedFreelist4096, 4096, malloc);
 declare_stack_allocator_struct!(StackAllocatedFreelist4, 4, stack);
 declare_stack_allocator_struct!(StackAllocatedFreelist8, 8, stack);
 declare_stack_allocator_struct!(GlobalAllocatedFreelist, 16, global);
 //trace_macros!(true);
 
-define_allocator_memory_pool!(global_buffer, 16, u8, [0; 1024 * 1024 * 100], global);
-define_allocator_memory_pool!(global_buffer2, 16, u8, [0; 1024 * 1024 * 100], global);
+define_allocator_memory_pool!(16, u8, [0; 1024 * 1024 * 100], global, global_buffer);
+define_allocator_memory_pool!(16, u8, [0; 1024 * 1024 * 100], global, global_buffer2);
 extern {
   fn calloc(n_elem : usize, el_size : usize) -> *mut u8;
+  fn malloc(len : usize) -> *mut u8;
+  fn free(item : *mut u8);
 }
 #[test]
 fn uninitialized_stack_pool_test() {
   {
-  define_allocator_memory_pool!(stack_global_buffer, 4, u8, [0; 65536], stack);
+  let mut stack_global_buffer = define_allocator_memory_pool!(4, u8, [0; 65536], stack);
   let mut ags = StackAllocatedFreelist4::<u8>::new_allocator(&mut stack_global_buffer, uninitialized);
   {
     let mut x = ags.alloc_cell(9999);
@@ -56,7 +59,7 @@ fn uninitialized_stack_pool_test() {
 }
 #[test]
 fn uninitialized_stack_pool_free_null() {
-  define_allocator_memory_pool!(stack_global_buffer, 8, u8, [0; 256 - 8], stack);
+  let mut stack_global_buffer = define_allocator_memory_pool!(8, u8, [0; 256 - 8], stack);
   let mut ags = StackAllocatedFreelist8::<u8>::new_allocator(&mut stack_global_buffer, uninitialized);
   {
     let s = ags.alloc_cell(0);
@@ -130,7 +133,7 @@ fn uninitialized_stack_pool_free_null() {
 #[test]
 fn uninitialized_heap_pool_test() {
   {
-  define_allocator_memory_pool!(heap_global_buffer, 4096, u8, [0; 6 * 1024 * 1024], heap);
+  let mut heap_global_buffer = define_allocator_memory_pool!(4096, u8, [0; 6 * 1024 * 1024], heap);
   let mut ags = HeapAllocatedFreelist::<u8>::new_allocator(4096, &mut heap_global_buffer, uninitialized);
   {
     let mut x = ags.alloc_cell(9999);
@@ -161,7 +164,7 @@ fn uninitialized_heap_pool_test() {
 fn uninitialized_calloc_pool_test() {
 
   {
-  define_allocator_memory_pool!(calloc_global_buffer, 4096, u8, [0; 200 * 1024 * 1024], calloc);
+  let calloc_global_buffer = unsafe{define_allocator_memory_pool!(4096, u8, [0; 200 * 1024 * 1024], calloc)};
   let mut ags = CallocAllocatedFreelist4096::<u8>::new_allocator(calloc_global_buffer, uninitialized);
   {
     let mut x = ags.alloc_cell(9999);
@@ -193,7 +196,9 @@ println!("{:?}", ags.free_list_start);
 fn uninitialized_global_pool_test() {
   {
   let mut ags = GlobalAllocatedFreelist::<u8>::new_allocator(uninitialized);
+  unsafe {
   bind_global_buffers_to_allocator!(ags, global_buffer, u8);
+  }
   {
     let mut x = ags.alloc_cell(9999);
     x.slice_mut()[0] = 4;
@@ -223,7 +228,7 @@ fn uninitialized_global_pool_test() {
 #[test]
 fn stack_pool_test() {
   {
-  define_allocator_memory_pool!(stack_global_buffer, 4, u8, [0; 65536], stack);
+  let mut stack_global_buffer = define_allocator_memory_pool!(4, u8, [0; 65536], stack);
   let mut ags = StackAllocatedFreelist4::<u8>::new_allocator(&mut stack_global_buffer, bzero);
   {
     let mut x = ags.alloc_cell(9999);
@@ -252,7 +257,7 @@ fn stack_pool_test() {
 }
 #[test]
 fn stack_pool_free_null() {
-  define_allocator_memory_pool!(stack_global_buffer, 8, u8, [0; 256 - 8], stack);
+  let mut stack_global_buffer = define_allocator_memory_pool!(8, u8, [0; 256 - 8], stack);
   let mut ags = StackAllocatedFreelist8::<u8>::new_allocator(&mut stack_global_buffer, bzero);
   {
     let s = ags.alloc_cell(0);
@@ -326,7 +331,7 @@ fn stack_pool_free_null() {
 #[test]
 fn heap_pool_test() {
   {
-  define_allocator_memory_pool!(heap_global_buffer, 4096, u8, [0; 6 * 1024 * 1024], heap);
+  let mut heap_global_buffer = define_allocator_memory_pool!(4096, u8, [0; 6 * 1024 * 1024], heap);
   let mut ags = HeapAllocatedFreelist::<u8>::new_allocator(4096, &mut heap_global_buffer, bzero);
   {
     let mut x = ags.alloc_cell(9999);
@@ -357,7 +362,7 @@ fn heap_pool_test() {
 fn calloc_pool_test() {
 
   {
-  define_allocator_memory_pool!(calloc_global_buffer, 4096, u8, [0; 200 * 1024 * 1024], calloc);
+  let calloc_global_buffer = unsafe {define_allocator_memory_pool!(4096, u8, [0; 200 * 1024 * 1024], calloc)};
   let mut ags = CallocAllocatedFreelist4096::<u8>::new_allocator(calloc_global_buffer, bzero);
   {
     let mut x = ags.alloc_cell(9999);
@@ -391,7 +396,7 @@ fn calloc_pool_test() {
 fn calloc_leak_pool_test() {
 
   {
-  define_allocator_memory_pool!(calloc_global_buffer, 4096, u8, [0; 200 * 1024 * 1024], calloc_no_free);
+  let calloc_global_buffer = unsafe{define_allocator_memory_pool!(4096, u8, [0; 200 * 1024 * 1024], calloc_no_free)};
   let mut ags = CallocAllocatedFreelist4096::<u8>::new_allocator(calloc_global_buffer, bzero);
   {
     let mut x = ags.alloc_cell(9999);
@@ -419,11 +424,49 @@ fn calloc_leak_pool_test() {
   }
 }
 
+
+#[test]
+fn malloc_pool_test() {
+
+  {
+  let malloc_global_buffer = unsafe {define_allocator_memory_pool!(4096, u8, [0; 200 * 1024 * 1024], malloc)};
+  let mut ags = MallocAllocatedFreelist4096::<u8>::new_allocator(malloc_global_buffer, bzero);
+  {
+    let mut x = ags.alloc_cell(9999);
+    x.slice_mut()[0] = 4;
+    let mut y = ags.alloc_cell(4);
+    y[0] = 5;
+    ags.free_cell(y);
+
+    let mut three = ags.alloc_cell(3);
+    three[0] = 6;
+    ags.free_cell(three);
+
+    let mut z = ags.alloc_cell(4);
+    z.slice_mut()[1] = 8;
+    let mut reget_three = ags.alloc_cell(4);
+    reget_three.slice_mut()[1] = 9;
+    //y.mem[0] = 6; // <-- this is an error (use after free)
+    assert_eq!(x[0], 4);
+    assert_eq!(z[0], 0);
+    assert_eq!(z[1], 8);
+    assert_eq!(reget_three[0], 0);
+    assert_eq!(reget_three[1], 9);
+    let mut _z = ags.alloc_cell(1);
+  }
+  }
+}
+
+
+
+
 #[test]
 fn global_pool_test() {
   {
   let mut ags = GlobalAllocatedFreelist::<u8>::new_allocator(bzero);
+  unsafe {
   bind_global_buffers_to_allocator!(ags, global_buffer2, u8);
+  }
   {
     let mut x = ags.alloc_cell(9999);
     x.slice_mut()[0] = 4;

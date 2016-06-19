@@ -65,7 +65,11 @@ macro_rules! define_stack_allocator_traits(
         }
         define_stack_allocator_traits!($name, generic);
     };
+    ($name : ident, $freelist_size : tt, malloc) => {
+        define_stack_allocator_traits!($name, calloc);
+    };
     ($name : ident, $freelist_size : tt, calloc) => {
+    
         impl<'a, T: 'a> Default for $name<'a, T> {
             fn default() -> Self {
                 return $name::<'a, T>{freelist : static_array!(&mut[]; $freelist_size), backing_store : None};
@@ -136,7 +140,9 @@ macro_rules! declare_stack_allocator_struct(
           }
         }
     };
-
+    ($name :ident, $freelist_size : tt, malloc) => {
+        declare_stack_allocator_struct!($name, $freelist_size, calloc);
+    };
     ($name :ident, $freelist_size : tt, calloc) => {
         struct $name<'a, T : 'a> {
             freelist : [&'a mut [T]; declare_stack_allocator_struct!(@as_expr $freelist_size)],
@@ -204,9 +210,9 @@ macro_rules! declare_stack_allocator_struct(
 #[macro_export]
 macro_rules! bind_global_buffers_to_allocator(
     ($allocator : expr, $buffer : ident, $T : ty) => {
-        $allocator.free_list_start = unsafe{$buffer::freelist.len()};
-        $allocator.system_resources.freelist = unsafe{&mut $buffer::freelist};
-        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:unsafe{&mut $buffer::heap}});
+        $allocator.free_list_start = $buffer::freelist.len();
+        $allocator.system_resources.freelist = &mut $buffer::freelist;
+        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:&mut $buffer::heap});
     };
 );
 
@@ -215,19 +221,25 @@ macro_rules! define_allocator_memory_pool(
     (@as_expr $expr:expr) => {$expr};
 
 
-    ($name : ident, $freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc) => {
-       let $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, true);
+    ($freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc) => {
+      alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, alloc_no_stdlib::AllocatorC::Calloc(calloc), free, true);
     };
-    ($name : ident, $freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc_no_free) => {
-       let $name : alloc_no_stdlib::CallocBackingStore<$T> = alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, false);
+    ($freelist_size : tt, $T : ty, [0; $heap_size : expr], calloc_no_free) => {
+       alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, alloc_no_stdlib::AllocatorC::Calloc(calloc), free, false);
     };
-    ($name : ident, $freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], heap) => {
-       let mut $name : Box<[$T]> = (vec![$default_value; $heap_size]).into_boxed_slice();
+    ($freelist_size : tt, $T : ty, [0; $heap_size : expr], malloc) => {
+      alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, alloc_no_stdlib::AllocatorC::Malloc(malloc), free, true);
     };
-    ($name : ident, $freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], stack) => {
-       let mut $name : [$T; $heap_size] = [$default_value; $heap_size];
+    ($freelist_size : tt, $T : ty, [0; $heap_size : expr], malloc_no_free) => {
+       alloc_no_stdlib::CallocBackingStore::<$T>::new($heap_size, alloc_no_stdlib::AllocatorC::Malloc(malloc), free, false);
     };
-    ($name : ident, $freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], global) => {
+    ($freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], heap) => {
+       (vec![$default_value; $heap_size]).into_boxed_slice();
+    };
+    ($freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], stack) => {
+       [$default_value; $heap_size];
+    };
+    ($freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], global, $name : ident) => {
        pub mod $name {
            pub static mut freelist : [&'static mut [$T];
                                   define_allocator_memory_pool!(@as_expr $freelist_size)]
