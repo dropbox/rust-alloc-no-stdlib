@@ -31,8 +31,7 @@ limits the program to only a few megs of dynamically allocated data
 
 Example:
 
-```
-
+```rust
 // First define a struct to hold all the array on the stack.
 declare_stack_allocator_struct!(StackAllocatedFreelist4, 4, stack);
 // since generics cannot be used, the actual struct to hold the memory must be defined with a macro
@@ -61,6 +60,7 @@ declare_stack_allocator_struct!(StackAllocatedFreelist4, 4, stack);
 ### On the heap
 This uses the standard Box facilities to allocate memory
 
+```rust
   let mut halloc = HeapAlloc::<u8>::new(0);
   for _i in 1..10 { // heap test
       let mut x = halloc.alloc_cell(100000);
@@ -75,11 +75,14 @@ This uses the standard Box facilities to allocate memory
       assert_eq!(x[9], 0);
       assert_eq!(z[0], 6);
   }
+```
 
 ### On the heap, but uninitialized
+
 This does allocate data every time it is requested, but it does not allocate the
 memory, so naturally it is unsafe. The caller must initialize the memory properly
-```
+
+```rust
   let mut halloc = unsafe{HeapAllocUninitialized::<u8>::new()};
   { // heap test
       let mut x = halloc.alloc_cell(100000);
@@ -95,14 +98,14 @@ memory, so naturally it is unsafe. The caller must initialize the memory properl
       assert_eq!(z[0], 6);
       ...
    }
-
+```
 
 ### On the heap in a single pool allocation
 This does a single big allocation on the heap, after which no further usage of the stdlib
 will happen. This can be useful for a jailed application that wishes to restrict syscalls
 at this point
 
-```
+```rust
 use alloc_no_stdlib::HeapPrealloc;
 ...
   let mut heap_global_buffer = define_allocator_memory_pool!(4096, u8, [0; 6 * 1024 * 1024], heap);
@@ -118,15 +121,13 @@ use alloc_no_stdlib::HeapPrealloc;
   }
 ```
 
-
-
 ### On the heap, uninitialized
 This does a single big allocation on the heap, after which no further usage of the stdlib
 will happen. This can be useful for a jailed application that wishes to restrict syscalls
 at this point. This option keep does not set the memory to a valid value, so it is
 necessarily marked unsafe
 
-```
+```rust
 use alloc_no_stdlib::HeapPrealloc;
 ...
   let mut heap_global_buffer = unsafe{HeapPrealloc::<u8>::new_uninitialized_memory_pool(6 * 1024 * 1024)};
@@ -148,7 +149,7 @@ It does invoke the C calloc function and hence must invoke unsafe code.
 In this version, the number of cells are fixed to the parameter specified in the struct definition
 (4096 in this example)
 
-```
+```rust
 extern {
   fn calloc(n_elem : usize, el_size : usize) -> *mut u8;
   fn malloc(len : usize) -> *mut u8;
@@ -185,7 +186,7 @@ If it is used from two places or at different times, undefined behavior may resu
 since multiple allocators may get access to global_buffer.
 
 
-```
+```rust
 declare_stack_allocator_struct!(GlobalAllocatedFreelist, 16, global);
 define_allocator_memory_pool!(16, u8, [0; 1024 * 1024 * 100], global, global_buffer);
 
