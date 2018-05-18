@@ -88,16 +88,47 @@ macro_rules! define_stack_allocator_traits(
                 return &mut self.freelist;
             }
         }
-        impl<'a, T: 'a> ops::Index<usize> for $name<'a, T> {
+        impl<'a, T: 'a> ::core::ops::Index<usize> for $name<'a, T> {
             type Output = [T];
             fn index<'b> (&'b self, _index : usize) -> &'b [T] {
                 return &self.freelist[_index];
             }
         }
 
-        impl<'a, T: 'a> ops::IndexMut<usize> for $name<'a, T> {
+        impl<'a, T: 'a> ::core::ops::IndexMut<usize> for $name<'a, T> {
             fn index_mut<'b>(&'b mut self, _index : usize) -> &'b mut [T] {
                 return &mut self.freelist[_index];
+            }
+        }
+        
+        impl<'a, T: 'a> ::core::ops::Index<::core::ops::Range<usize>> for $name<'a, T>
+        {
+            type Output = [&'a mut [T]];
+            
+            #[inline]
+            fn index(&self, index: ::core::ops::Range<usize>) -> &Self::Output {
+                ::core::ops::Index::index(&**self, index)
+            }
+        }
+
+        impl<'a, T: 'a> ::core::ops::IndexMut<::core::ops::Range<usize>> for $name<'a, T>
+        {
+            #[inline]
+            fn index_mut(&mut self, index: ::core::ops::Range<usize>) -> &mut Self::Output {
+                ::core::ops::IndexMut::index_mut(&mut **self, index)
+            }
+        }
+
+        impl<'a, T: 'a> ::core::ops::Deref for $name<'a, T> {
+            type Target = [&'a mut [T]];
+            
+            fn deref(&self) -> &[&'a mut [T]] {
+                self.slice()
+            }
+        }
+        impl<'a, T:'a > ::core::ops::DerefMut for $name<'a, T> {
+            fn deref_mut(&mut self) -> &mut [&'a mut [T]] {
+                self.slice_mut()
             }
         }
     };

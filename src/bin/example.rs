@@ -2,7 +2,6 @@
 #[macro_use]
 extern crate alloc_no_stdlib;
 extern crate core;
-use core::ops;
 mod heap_alloc;
 
 pub use heap_alloc::HeapAllocator;
@@ -31,6 +30,12 @@ declare_stack_allocator_struct!(StackAllocatedFreelist16, 16, stack);
 fn show_heap_prealloc() {
 
 }
+
+fn print_range<A:Allocator<u8>>(data:&A::AllocatedMemory, start: usize, end:usize) {
+    let data:&[u8] = &data[start..end];
+    println!("{} {:?} {}\n", data[start], data[0], data[end-start-1]);
+}
+
 #[cfg(not(feature="no-stdlib"))]
 fn show_heap_prealloc() {
   let mut zero_global_buffer = define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 20], heap);

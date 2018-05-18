@@ -5,7 +5,7 @@ use std;
 use super::{SliceWrapper, SliceWrapperMut, Allocator};
 
 use core;
-use core::ops;
+
 use std::boxed::Box;
 use std::vec::Vec;
 pub struct WrapBox<T> {
