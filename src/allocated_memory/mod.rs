@@ -1,19 +1,26 @@
 extern crate core;
-use core::ops;
+#[macro_use]
+mod index_macro;
+mod test;
 use core::default::Default;
-
+pub use core::ops::IndexMut;
+pub use core::ops::Index;
+pub use core::ops::Range;
 pub trait SliceWrapper<T> {
-  fn slice(& self) -> & [T];
+    fn slice(& self) -> & [T];
+    fn len(&self) -> usize{
+        self.slice().len()
+    }
 }
 
-pub trait SliceWrapperMut<T> {
+pub trait SliceWrapperMut<T> : SliceWrapper<T> {
   fn slice_mut (&mut self) -> & mut [T];
 }
 
 pub trait AllocatedSlice<T>
-    : SliceWrapperMut<T> + SliceWrapper<T> + ops::IndexMut<usize> + ops::Index<usize> + Default {
+    : SliceWrapperMut<T> + SliceWrapper<T> + Default {
 }
 
-impl<T, U> AllocatedSlice<T> for U where U : SliceWrapperMut<T> + SliceWrapper<T> + ops::IndexMut<usize> + ops::Index<usize> + Default {
+impl<T, U> AllocatedSlice<T> for U where U : SliceWrapperMut<T> + SliceWrapper<T> + Default {
 
 }

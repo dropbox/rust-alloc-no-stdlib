@@ -1,6 +1,6 @@
 use alloc_no_stdlib;
-use core::ops;
 use core;
+use alloc_no_stdlib::{SliceWrapper, SliceWrapperMut};
 
 pub struct Rebox<T> {
    b : Box<[T]>,
@@ -13,19 +13,7 @@ impl<T> core::default::Default for Rebox<T> {
        return Rebox::<T>{b : b};
     }
 }
-
-impl<T> ops::Index<usize> for Rebox<T>{
-    type Output = T;
-    fn index(&self, index : usize) -> &T {
-        return &(*self.b)[index]
-    }
-}
-
-impl<T> ops::IndexMut<usize> for Rebox<T>{
-    fn index_mut(&mut self, index : usize) -> &mut T {
-        return &mut (*self.b)[index]
-    }
-}
+define_index_ops_mut!(T, Rebox<T>);
 
 impl<T> alloc_no_stdlib::SliceWrapper<T> for Rebox<T> {
     fn slice(&self) -> & [T] {

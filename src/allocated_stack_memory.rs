@@ -1,10 +1,13 @@
 extern crate core;
+
 use super::allocated_memory::SliceWrapper;
 use super::allocated_memory::SliceWrapperMut;
-use core::ops;
+
 pub struct AllocatedStackMemory<'a, T:'a> {
     pub mem : &'a mut [T],
 }
+
+define_index_ops_mut!(a, T, AllocatedStackMemory<'a, T>);
 
 impl<'a, T: 'a> core::default::Default for AllocatedStackMemory<'a, T> {
     fn default() -> Self {
@@ -12,18 +15,6 @@ impl<'a, T: 'a> core::default::Default for AllocatedStackMemory<'a, T> {
     }
 }
 
-impl<'a, T: 'a> ops::Index<usize> for AllocatedStackMemory<'a, T> {
-    type Output = T;
-    fn index<'b>(&'b self, _index : usize) -> &'b T {
-        return &self.mem[_index];
-    }
-}
-
-impl<'a, T: 'a> ops::IndexMut<usize> for AllocatedStackMemory<'a, T> {
-    fn index_mut<'b>(&'b mut self, _index : usize) -> &'b mut T {
-        return &mut self.mem[_index];
-    }
-}
 
 impl<'a, T: 'a> SliceWrapper<T> for AllocatedStackMemory<'a, T> {
     fn slice(& self) -> & [T] {

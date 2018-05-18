@@ -180,9 +180,9 @@ macro_rules! declare_stack_allocator_struct(
 #[macro_export]
 macro_rules! bind_global_buffers_to_allocator(
     ($allocator : expr, $buffer : ident, $T : ty) => {
-        $allocator.free_list_start = $buffer::freelist.len();
-        $allocator.system_resources.freelist = &mut $buffer::freelist;
-        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:&mut $buffer::heap});
+        $allocator.free_list_start = $buffer::FREELIST.len();
+        $allocator.system_resources.freelist = &mut $buffer::FREELIST;
+        $allocator.free_cell(AllocatedStackMemory::<$T>{mem:&mut $buffer::HEAP});
     };
 );
 
@@ -211,10 +211,10 @@ macro_rules! define_allocator_memory_pool(
     };
     ($freelist_size : tt, $T : ty, [$default_value : expr; $heap_size : expr], global, $name : ident) => {
        pub mod $name {
-           pub static mut freelist : [&'static mut [$T];
+           pub static mut FREELIST : [&'static mut [$T];
                                   define_allocator_memory_pool!(@as_expr $freelist_size)]
                = static_array!(&mut[]; $freelist_size);
-           pub static mut heap : [$T; $heap_size] = [$default_value; $heap_size];
+           pub static mut HEAP : [$T; $heap_size] = [$default_value; $heap_size];
        }
     };
 

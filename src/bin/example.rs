@@ -61,7 +61,7 @@ fn show_heap_prealloc() {
 fn main() {
   let mut global_buffer = unsafe {define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 200], calloc)};
   {
-  let mut gbref = &mut global_buffer;
+  let gbref = &mut global_buffer;
 {
   let mut ags = CallocAllocatedFreelist4::<u8>::new_allocator(gbref.data, bzero);
 

@@ -2,8 +2,8 @@ language: rust
 rust:
   - nightly
   - stable
-  # The following Rust version represents the oldest supported version of Mio
-  - 1.6.0
+  - 1.12.0
+  - 1.8.0
 
 os:
   - linux
@@ -11,3 +11,11 @@ os:
 
 script:
   - cargo test
+  - cargo test --features=unsafe --release
+  - cargo test --features=no-stdlib
+  - cargo test --release
+
+matrix:
+  exclude:
+    - rust: 1.8.0
+      os: osx

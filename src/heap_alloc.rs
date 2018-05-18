@@ -19,19 +19,7 @@ impl<T> core::default::Default for WrapBox<T> {
        return WrapBox::<T>{b : b};
     }
 }
-
-impl<T> ops::Index<usize> for WrapBox<T>{
-    type Output = T;
-    fn index(&self, index : usize) -> &T {
-        return &(*self.b)[index]
-    }
-}
-
-impl<T> ops::IndexMut<usize> for WrapBox<T>{
-    fn index_mut(&mut self, index : usize) -> &mut T {
-        return &mut (*self.b)[index]
-    }
-}
+define_index_ops_mut!(T, WrapBox<T>);
 
 impl<T> super::SliceWrapper<T> for WrapBox<T> {
     fn slice(&self) -> & [T] {

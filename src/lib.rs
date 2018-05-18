@@ -3,6 +3,7 @@
 #[cfg(not(feature="no-stdlib"))]
 #[macro_use]
 extern crate std;
+#[macro_use]
 mod allocated_memory;
 mod stack_allocator;
 mod allocated_stack_memory;

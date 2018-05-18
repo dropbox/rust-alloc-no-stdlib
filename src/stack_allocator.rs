@@ -51,7 +51,7 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
         if !found {
             panic!("OOM");
         }
-        let mut available_slice = core::mem::replace(&mut self.system_resources.slice_mut()[index],
+        let available_slice = core::mem::replace(&mut self.system_resources.slice_mut()[index],
                                                     &mut[]);
         if available_slice.len() == len
            || (available_slice.len() < len + 32
@@ -60,7 +60,7 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
             // we must assign free_list_start
             if index != self.free_list_start {
                 assert!(index > self.free_list_start);
-                let mut farthest_free_list = core::mem::replace(
+                let farthest_free_list = core::mem::replace(
                     &mut self.system_resources.slice_mut()[self.free_list_start],
                     &mut []);
                 core::mem::replace(&mut self.system_resources.slice_mut()[index],
@@ -70,13 +70,13 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
             return self.clear_if_necessary(index,
                                            AllocatedStackMemory::<'a, T>{mem:available_slice});
         } else { // the memory allocated was not the entire range of items. Split and move on
-            let (mut retval, return_to_sender) = available_slice.split_at_mut(len);
+            let (retval, return_to_sender) = available_slice.split_at_mut(len);
             core::mem::replace(&mut self.system_resources.slice_mut()[index], return_to_sender);
             return self.clear_if_necessary(index, AllocatedStackMemory::<'a, T>{mem:retval});
         }
     }
     fn free_cell(self : &mut StackAllocator<'a, T, U>,
-                 mut val : AllocatedStackMemory<'a, T>) {
+                 val : AllocatedStackMemory<'a, T>) {
         if val.slice().len() == 0 {
             return;
         }
