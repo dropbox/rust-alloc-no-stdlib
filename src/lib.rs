@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(nll)]
 
 #[cfg(not(feature="no-stdlib"))]
 #[macro_use]
