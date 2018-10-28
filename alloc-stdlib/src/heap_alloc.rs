@@ -4,39 +4,54 @@ use std;
 
 use super::{SliceWrapper, SliceWrapperMut, Allocator};
 
-use core;
-use core::ops;
+use std::ops;
 use std::boxed::Box;
 use std::vec::Vec;
-pub struct WrapBox<T> {
-   b : std::boxed::Box<[T]>,
+pub struct WrapBox<T>(std::boxed::Box<[T]>);
+
+impl<T> From<Vec<T>> for WrapBox<T> {
+    fn from(data: Vec<T>) -> Self {
+        WrapBox(data.into())
+    }
 }
 
-impl<T> core::default::Default for WrapBox<T> {
+impl<T> Into<Box<[T]>> for WrapBox<T> {
+    fn into(self) -> Box<[T]> {
+        self.0
+    }
+}
+
+impl<T> Default for WrapBox<T> {
     fn default() -> Self {
        let v : std::vec::Vec<T> = std::vec::Vec::new();
        let b = v.into_boxed_slice();
-       return WrapBox::<T>{b : b};
+       return WrapBox::<T>(b);
     }
 }
-define_index_ops_mut!(T, WrapBox<T>);
 
 impl<T> super::SliceWrapper<T> for WrapBox<T> {
     fn slice(&self) -> & [T] {
-       return &*self.b
+       return &*self.0
     }
 }
 
 impl<T> super::SliceWrapperMut<T> for WrapBox<T> {
     fn slice_mut(&mut self) -> &mut [T] {
-       return &mut*self.b
+       return &mut*self.0
     }
 }
 
 pub struct HeapAlloc<T : core::clone::Clone>{
    pub default_value : T,
 }
-impl<T : core::clone::Clone> HeapAlloc<T> {
+
+impl<T: Clone+Default> Default for HeapAlloc<T> {
+    fn default() -> Self {
+        Self::new(T::default())
+    }
+}
+
+impl<T : Clone> HeapAlloc<T> {
    pub fn new(data : T) -> HeapAlloc<T> {
       return HeapAlloc::<T>{default_value : data};
    }
@@ -48,7 +63,7 @@ impl<T : core::clone::Clone> super::Allocator<T> for HeapAlloc<T> {
 
        let v : std::vec::Vec<T> = vec![self.default_value.clone();len];
        let b = v.into_boxed_slice();
-       return WrapBox::<T>{b : b};
+       return WrapBox::<T>(b);
    }
    fn free_cell(self : &mut HeapAlloc<T>, _data : WrapBox<T>) {
 

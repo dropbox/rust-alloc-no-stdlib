@@ -16,4 +16,3 @@ name = "example"
 
 [features]
 unsafe = []
-no-stdlib = []

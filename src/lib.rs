@@ -1,8 +1,5 @@
 #![no_std]
 
-#[cfg(not(feature="no-stdlib"))]
-#[macro_use]
-extern crate std;
 #[macro_use]
 mod allocated_memory;
 mod stack_allocator;
@@ -16,13 +13,7 @@ pub use allocated_memory::AllocatedSlice;
 pub use allocated_stack_memory::AllocatedStackMemory;
 pub use stack_allocator::Allocator;
 pub use stack_allocator::StackAllocator;
-mod heap_alloc;
-#[cfg(not(feature="no-stdlib"))]
-pub use heap_alloc::HeapAlloc;
-#[cfg(not(feature="no-stdlib"))]
-pub use heap_alloc::HeapPrealloc;
-#[cfg(all(not(feature="no-stdlib"), feature="unsafe"))]
-pub use heap_alloc::HeapAllocUninitialized;
+
 use core::default::Default;
 pub fn bzero<T : Default> (data : &mut [T]) {
     for iter in data.iter_mut() {

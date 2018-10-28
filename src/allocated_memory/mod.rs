@@ -1,7 +1,6 @@
 extern crate core;
 #[macro_use]
 mod index_macro;
-mod test;
 use core::default::Default;
 pub use core::ops::IndexMut;
 pub use core::ops::Index;
