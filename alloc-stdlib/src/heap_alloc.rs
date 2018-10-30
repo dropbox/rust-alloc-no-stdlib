@@ -11,7 +11,7 @@ pub struct WrapBox<T>(std::boxed::Box<[T]>);
 
 impl<T> From<Vec<T>> for WrapBox<T> {
     fn from(data: Vec<T>) -> Self {
-        WrapBox(data.into())
+        WrapBox(data.into_boxed_slice())
     }
 }
 
