@@ -67,7 +67,7 @@ impl<T> ops::IndexMut<Range<usize>> for WrapBox<T> {
 }
 
 
-pub struct HeapAlloc<T : core::clone::Clone>{
+pub struct HeapAlloc<T : Clone>{
    pub default_value : T,
 }
 
@@ -83,7 +83,7 @@ impl<T : Clone> HeapAlloc<T> {
    }
 }
 
-impl<T : core::clone::Clone> super::Allocator<T> for HeapAlloc<T> {
+impl<T : Clone> super::Allocator<T> for HeapAlloc<T> {
    type AllocatedMemory = WrapBox<T>;
    fn alloc_cell(self : &mut HeapAlloc<T>, len : usize) -> WrapBox<T> {
 
@@ -130,7 +130,7 @@ pub struct HeapPrealloc<'a, T : 'a> {
 }
 define_stack_allocator_traits!(HeapPrealloc, heap);
 
-impl<'a, T : core::clone::Clone+'a> HeapPrealloc<'a, T> {
+impl<'a, T : Clone+'a> HeapPrealloc<'a, T> {
     fn make_freelist(freelist_size : usize) -> std::boxed::Box<[&'a mut[T]]> {
         let mut retval = Vec::<&'a mut[T]>::with_capacity(freelist_size);
         for _i in 0..freelist_size {
