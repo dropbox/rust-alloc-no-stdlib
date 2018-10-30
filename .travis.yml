@@ -12,8 +12,9 @@ os:
 script:
   - cargo test
   - cargo test --features=unsafe --release
-  - cargo test --features=no-stdlib
-  - cargo test --release
+  - cd alloc-stdlib && cargo test && cd ..
+  - cd alloc-stdlib && cargo test --release --features=unsafe && cd ..
+  - cd alloc-stdlib && cargo test --release && cd .. 
 
 matrix:
   exclude:

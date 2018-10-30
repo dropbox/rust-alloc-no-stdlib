@@ -1,10 +1,10 @@
-#![cfg(not(feature="no-stdlib"))]
 use std;
 
 
 use super::{SliceWrapper, SliceWrapperMut, Allocator};
 
 use std::ops;
+use std::ops::Range;
 use std::boxed::Box;
 use std::vec::Vec;
 pub struct WrapBox<T>(std::boxed::Box<[T]>);
@@ -40,6 +40,32 @@ impl<T> super::SliceWrapperMut<T> for WrapBox<T> {
        return &mut*self.0
     }
 }
+impl<T> ops::Index<usize> for WrapBox<T> {
+  type Output = T;
+  fn index(&self, index: usize) -> &T {
+    &(*self.0)[index]
+  }
+}
+
+impl<T> ops::IndexMut<usize> for WrapBox<T> {
+  fn index_mut(&mut self, index: usize) -> &mut T {
+    &mut (*self.0)[index]
+  }
+}
+
+impl<T> ops::Index<Range<usize>> for WrapBox<T> {
+  type Output = [T];
+  fn index(&self, index: Range<usize>) -> &[T] {
+    &(*self.0)[index]
+  }
+}
+
+impl<T> ops::IndexMut<Range<usize>> for WrapBox<T> {
+  fn index_mut(&mut self, index: Range<usize>) -> &mut [T] {
+    &mut (*self.0)[index]
+  }
+}
+
 
 pub struct HeapAlloc<T : core::clone::Clone>{
    pub default_value : T,
@@ -91,7 +117,7 @@ impl<T> super::Allocator<T> for HeapAllocUninitialized<T> {
        let mut v : std::vec::Vec<T> = std::vec::Vec::with_capacity(len);
        unsafe {v.set_len(len)};
        let b = v.into_boxed_slice();
-       return WrapBox::<T>{b : b};
+       return WrapBox::<T>(b);
    }
    fn free_cell(self : &mut Self, _data : WrapBox<T>) {
 

@@ -1,4 +1,3 @@
-#![cfg(not(feature="no-stdlib"))]
 #![cfg(test)]
 
 use super::{SliceWrapperMut, SliceWrapper};
