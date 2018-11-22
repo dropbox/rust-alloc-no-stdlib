@@ -39,17 +39,26 @@ pub enum AllocatorC {
 }
 impl<'a, T : 'a> CallocBackingStore<'a, T> {
   pub unsafe fn new(num_elements : usize, alloc : AllocatorC, free : unsafe extern "C" fn (*mut u8), should_free : bool) -> Self{
-     let retval : *mut u8 = match alloc {
-          AllocatorC::Calloc(calloc) => calloc(num_elements, core::mem::size_of::<T>()),
-          AllocatorC::Malloc(malloc) => malloc(num_elements *core::mem::size_of::<T>()),
-          AllocatorC::Custom(malloc) => malloc(num_elements *core::mem::size_of::<T>()),
+     let retval : *mut u8 = if num_elements == 0 {core::ptr::null_mut()} else {
+        match alloc {
+           AllocatorC::Calloc(calloc) => calloc(num_elements, core::mem::size_of::<T>()),
+           AllocatorC::Malloc(malloc) => malloc(num_elements *core::mem::size_of::<T>()),
+           AllocatorC::Custom(malloc) => malloc(num_elements *core::mem::size_of::<T>()),
+        }
      };
+     if num_elements == 0 || retval.is_null() {
+        return CallocBackingStore::<'a, T>{
+         raw_data : core::ptr::null_mut(),
+         data : &mut[],
+         free : free,
+       }
+     }
      let raw_data : *mut T = core::mem::transmute(retval);
      if should_free {
        return CallocBackingStore::<'a, T>{
          raw_data : retval,
          data : core::slice::from_raw_parts_mut(raw_data,
-                                                           num_elements),
+                                                num_elements),
          free : free,
        };
      } else {
@@ -57,7 +66,7 @@ impl<'a, T : 'a> CallocBackingStore<'a, T> {
        return CallocBackingStore::<'a, T>{
          raw_data : core::mem::transmute(null_ptr),//retval,
          data : core::slice::from_raw_parts_mut(raw_data,
-                                                           num_elements),
+                                                num_elements),
          free : free,
        };
     }
