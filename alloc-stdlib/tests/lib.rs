@@ -159,7 +159,7 @@ fn uninitialized_heap_pool_test() {
     assert_eq!(x[0], 4);
     assert_eq!(z[0], 6);
     assert_eq!(z[1], 8);
-    assert_eq!(reget_three[0], 0);
+    // assert_eq!(reget_three[0], 0); // not valid: uninitialized heap memory
     assert_eq!(reget_three[1], 9);
     let mut _z = ags.alloc_cell(1);
   }
@@ -190,7 +190,7 @@ fn uninitialized_calloc_pool_test() {
     assert_eq!(x[0], 4);
     assert_eq!(z[0], 6);
     assert_eq!(z[1], 8);
-    assert_eq!(reget_three[0], 0);
+    assert_eq!(reget_three[0], 0); // since we have control over this buffer and the free strategy: this should be zero
     assert_eq!(reget_three[1], 9);
     let mut _z = ags.alloc_cell(1);
   }
