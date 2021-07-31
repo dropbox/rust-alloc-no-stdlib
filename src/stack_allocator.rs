@@ -63,7 +63,7 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
                 let farthest_free_list = core::mem::replace(
                     &mut self.system_resources.slice_mut()[self.free_list_start],
                     &mut []);
-                core::mem::replace(&mut self.system_resources.slice_mut()[index],
+                let _ = core::mem::replace(&mut self.system_resources.slice_mut()[index],
                                    farthest_free_list);
             }
             self.free_list_start += 1;
@@ -71,7 +71,7 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
                                            AllocatedStackMemory::<'a, T>{mem:available_slice});
         } else { // the memory allocated was not the entire range of items. Split and move on
             let (retval, return_to_sender) = available_slice.split_at_mut(len);
-            core::mem::replace(&mut self.system_resources.slice_mut()[index], return_to_sender);
+            let _ = core::mem::replace(&mut self.system_resources.slice_mut()[index], return_to_sender);
             return self.clear_if_necessary(index, AllocatedStackMemory::<'a, T>{mem:retval});
         }
     }
@@ -82,7 +82,7 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
         }
         if self.free_list_start > 0 {
             self.free_list_start -=1;
-            core::mem::replace(&mut self.system_resources.slice_mut()[self.free_list_start],
+            let _ = core::mem::replace(&mut self.system_resources.slice_mut()[self.free_list_start],
                                val.mem);
 
         } else {
@@ -90,7 +90,7 @@ impl<'a, T : 'a, U : allocated_memory::AllocatedSlice<&'a mut[T]> >
                self.free_list_overflow_count += 1;
                self.free_list_overflow_count %= self.system_resources.slice().len();
                if self.system_resources.slice()[self.free_list_overflow_count].len() < val.mem.len() {
-                   core::mem::replace(&mut self.system_resources.slice_mut()[self.free_list_overflow_count],
+                   let _ = core::mem::replace(&mut self.system_resources.slice_mut()[self.free_list_overflow_count],
                                       val.mem);
                    return;
                }

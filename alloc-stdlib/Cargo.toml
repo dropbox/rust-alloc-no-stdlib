@@ -15,7 +15,7 @@ autobins = false
 name = "example"
 
 [dependencies]
-"alloc-no-stdlib" = { version="~2.0"}
+"alloc-no-stdlib" = { version="2.0.0", path="../"}
 
 [features]
 unsafe = []

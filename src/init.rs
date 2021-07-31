@@ -33,7 +33,7 @@ macro_rules! static_array {
 
     (@as_expr $expr:expr) => {$expr};
 
-    [$expr:expr; $n:tt] => { static_array!(@accum ($n, $expr) -> ()) };
+    ($expr:expr; $n:tt) => { static_array!(@accum ($n, $expr) -> ()) };
 }
 
 
