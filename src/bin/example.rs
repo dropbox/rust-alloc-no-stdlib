@@ -25,8 +25,26 @@ use alloc_no_stdlib::StackAllocator;
 use alloc_no_stdlib::bzero;
 declare_stack_allocator_struct!(CallocAllocatedFreelist4, 4, calloc);
 declare_stack_allocator_struct!(StackAllocatedFreelist16, 16, stack);
+#[repr(C)]
+
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub struct HuffmanCode {
+  pub value: u16, // symbol value or table offset
+  pub bits: u8, // number of bits used for this symbol
+}
+
+
+impl Default for HuffmanCode {
+  fn default() -> Self {
+    HuffmanCode {
+      value: 0,
+      bits: 0,
+    }
+  }
+}
 
 fn main() {
+
   let mut global_buffer = unsafe {define_allocator_memory_pool!(4, u8, [0; 1024 * 1024 * 200], calloc)};
   {
   let gbref = &mut global_buffer;
@@ -57,6 +75,11 @@ fn main() {
 
 
   let mut stack_global_buffer = define_allocator_memory_pool!(16, u8, [0; 1024 * 1024], stack);
+  let mut stack_global_buffer_hc = define_allocator_memory_pool!(16, HuffmanCode, [HuffmanCode::default(); 1024 * 1024], stack);
+  {
+  let mut stackallocatorhc = StackAllocatedFreelist16::<HuffmanCode>::new_allocator(&mut stack_global_buffer_hc, bzero);
+    stackallocatorhc.alloc_cell(9999);
+  }
   let mut stackallocator = StackAllocatedFreelist16::<u8>::new_allocator(&mut stack_global_buffer, bzero);
   {
     let mut x = stackallocator.alloc_cell(9999);
