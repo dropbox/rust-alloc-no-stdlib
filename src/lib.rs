@@ -74,8 +74,7 @@ impl<'a, T : 'a> CallocBackingStore<'a, T> {
 }
 impl<'a, T:'a> Drop for CallocBackingStore<'a, T> {
   fn drop(self :&mut Self) {
-//      core::mem::forget(core::mem::replace(self.data, &mut[]));
-    core::mem::forget(core::mem::replace(&mut self.data, &mut[]));
+    _ = core::mem::take(&mut self.data);
     if !self.raw_data.is_null() {
       let local_free = self.free;
       unsafe {(local_free)(self.raw_data)};
