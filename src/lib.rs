@@ -1,4 +1,8 @@
 #![no_std]
+// The only unsafe code in this crate is the C calloc/malloc backing store,
+// which is gated behind the "unsafe" feature. Assert that the default build
+// contains no unsafe code at all.
+#![cfg_attr(not(feature="unsafe"), forbid(unsafe_code))]
 
 #[macro_use]
 mod allocated_memory;
@@ -25,6 +29,7 @@ pub fn uninitialized<T> (_data : &mut[T]) {}
 
 
 
+#[cfg(feature="unsafe")]
 #[derive(Debug)]
 pub struct CallocBackingStore<'a, T : 'a> {
     pub raw_data : *mut u8,
@@ -32,11 +37,13 @@ pub struct CallocBackingStore<'a, T : 'a> {
     free : unsafe extern "C" fn(*mut u8),
 }
 
+#[cfg(feature="unsafe")]
 pub enum AllocatorC {
    Calloc(unsafe extern "C" fn(usize, usize) -> *mut u8),
    Malloc(unsafe extern "C" fn(usize) -> *mut u8),
    Custom(fn(usize) -> *mut u8),
 }
+#[cfg(feature="unsafe")]
 impl<'a, T : 'a> CallocBackingStore<'a, T> {
   pub unsafe fn new(num_elements : usize, alloc : AllocatorC, free : unsafe extern "C" fn (*mut u8), should_free : bool) -> Self{
      let retval : *mut u8 = if num_elements == 0 {core::ptr::null_mut()} else {
@@ -72,6 +79,7 @@ impl<'a, T : 'a> CallocBackingStore<'a, T> {
     }
   }
 }
+#[cfg(feature="unsafe")]
 impl<'a, T:'a> Drop for CallocBackingStore<'a, T> {
   fn drop(self :&mut Self) {
 //      core::mem::forget(core::mem::replace(self.data, &mut[]));

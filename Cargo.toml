@@ -13,6 +13,9 @@ autobins = false
 
 [[bin]]
 name = "example"
+# The example demonstrates the C calloc-backed allocator, which is the only
+# unsafe code in the crate and now lives behind the "unsafe" feature.
+required-features = ["unsafe"]
 
 [features]
 unsafe = []
