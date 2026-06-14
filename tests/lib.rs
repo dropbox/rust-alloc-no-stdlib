@@ -128,6 +128,7 @@ fn uninitialized_stack_pool_free_null() {
 
 }
 
+#[cfg(feature="unsafe")]
 #[test]
 fn uninitialized_calloc_pool_test() {
 
@@ -297,6 +298,7 @@ fn stack_pool_free_null() {
 
 }
 
+#[cfg(feature="unsafe")]
 #[test]
 fn calloc_pool_test() {
 
