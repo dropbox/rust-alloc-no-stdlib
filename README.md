@@ -208,6 +208,15 @@ unsafe {
 }
 ```
 
+## What changed in 3.0.0
+
+Forbid unsafe and moving of the Calloc malloc into the unsafe bin so we can
+forbid unsafe using the compiler.
+
+Note: this is a breaking change for downstreams that referenced
+    CallocBackingStore/AllocatorC without the "unsafe" feature (e.g. brotli's
+    "seccomp" feature, which should now also enable alloc-no-stdlib/unsafe).
+
 
 ## Contributors
 - Daniel Reiter Horn
