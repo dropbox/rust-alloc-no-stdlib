@@ -204,6 +204,13 @@ unsafe {
 
 Now compatible with alloc-no-stdlib 3.x
 
+Gate calloc backing store behind the "unsafe" feature; forbid unsafe by default
+
+CallocBackingStore / AllocatorC are the crate's only unsafe code (raw pointer
+transmutes and a C free call in Drop). Move them behind the existing "unsafe"
+feature and add `#![cfg_attr(not(feature="unsafe"), forbid(unsafe_code))]` so
+the default build is compiler-certified unsafe-free.
+
 
 ## Contributors
 - Daniel Reiter Horn
