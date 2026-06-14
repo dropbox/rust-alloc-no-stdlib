@@ -200,6 +200,10 @@ unsafe {
 }
 ```
 
+## What's new in 0.3.0
+
+Now compatible with alloc-no-stdlib 3.x
+
 
 ## Contributors
 - Daniel Reiter Horn

@@ -164,6 +164,7 @@ fn uninitialized_heap_pool_test() {
   }
   }
 }
+#[cfg(feature="unsafe")]
 #[test]
 fn uninitialized_calloc_pool_test() {
 
@@ -366,6 +367,7 @@ fn heap_pool_test() {
 
 
 
+#[cfg(feature="unsafe")]
 #[test]
 fn calloc_pool_test() {
 
