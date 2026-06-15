@@ -1,6 +1,6 @@
 # Framework for allocating memory in #![no_std] modules.
 
-[![crates.io](http://meritbadge.herokuapp.com/alloc-no-stdlib)](https://crates.io/crates/alloc-no-stdlib)
+[![crates.io](https://img.shields.io/crates/v/alloc-no-stdlib.svg)](https://crates.io/crates/alloc-no-stdlib)
 [![Build Status](https://travis-ci.org/dropbox/rust-alloc-no-stdlib.svg?branch=master)](https://travis-ci.org/dropbox/rust-alloc-no-stdlib)
 
 
